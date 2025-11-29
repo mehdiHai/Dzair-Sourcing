@@ -10,6 +10,7 @@
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="./manifest.json" />
   <script>
     tailwind.config = {
       theme: {
@@ -1214,5 +1215,12 @@
     const root = ReactDOM.createRoot(document.getElementById('app'));
     root.render(<DzairCalculator />);
   </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js')
+       .then(() => console.log("Service Worker registered"))
+       .catch(err => console.log("SW registration failed", err));
+ }
+</script>
 </body>
 </html>
