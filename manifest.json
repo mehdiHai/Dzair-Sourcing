@@ -1,23 +1,26 @@
 {
   "name": "Dzair Sourcing Cars",
   "short_name": "DzairSourcing",
+  "description": "Advanced calculator for vehicle importation in Algeria.",
   "start_url": "./index.html",
+  "scope": ".",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#006233",
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "icons/icon-maskable.png",
+      "src": "./icon-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
