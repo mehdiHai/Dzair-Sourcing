@@ -1,13 +1,3 @@
-Here’s your one-file website, no React, with:
-	•	NEW + USED cars
-	•	Engine type selector for both
-	•	For used: combined rates with discount (11.42 / 19.62 / 121.06).
-	•	For new: DD varies by motor type, TCS = 3%, TVA = 19% (split and displayed).
-	•	New-car vignette: 150 000 DZD.
-	•	Legal refs including https://www.douane.gov.dz at the bottom.
-
-You can save this as index.html and host it directly.
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
