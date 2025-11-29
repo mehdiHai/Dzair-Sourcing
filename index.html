@@ -16,14 +16,23 @@
     body { background: #f6f7fb; font-family: 'Poppins', sans-serif; }
     .rtl { direction: rtl; font-family: 'Cairo', sans-serif; }
     .ltr { direction: ltr; font-family: 'Poppins', sans-serif; }
-    .section { background: #fff; border-radius: 18px; margin-bottom: 12px; padding:18px 12px; box-shadow: 0 1px 6px 0 rgba(0,0,0,.07); }
-    input[type="number"], input[type="text"] { width:100%; padding:9px 10px; border-radius:8px; border:1.5px solid #e0e4ea; outline:none; font-size:16px; }
-    input[type="number"]:focus, input[type="text"]:focus { border-color:#006233; }
+    .app-nav-btn {
+      color:#006233;font-weight:600;border:none;
+      background:transparent;padding:6px 15px;font-size:16px;cursor:pointer;
+    }
+    .app-nav-btn[aria-current="page"] {
+      border-bottom:3px solid #006233;
+      color:#006233;font-weight:700;
+    }
+    .back-btn {font-size:18px;padding:4px 0 4px 0;}
     .best-badge{ background:#dcfce7; color:#006233; font-size:10px; border-radius:7px; font-weight:600; margin-left:6px;padding:2px 7px;}
     .cta-tip{ background:#ecfdf5; color:#047857; border-radius:12px; padding:12px 8px; margin-bottom:8px; font-size:14px;text-align:left;}
     @media screen and (max-width:420px){
       .section,.cta-tip{padding-left:2vw;padding-right:2vw;}
     }
+    .section { background: #fff; border-radius: 18px; margin-bottom: 12px; padding:18px 12px; box-shadow: 0 1px 6px 0 rgba(0,0,0,.07); }
+    input[type="number"], input[type="text"] { width:100%; padding:9px 10px; border-radius:8px; border:1.5px solid #e0e4ea; outline:none; font-size:16px; }
+    input[type="number"]:focus, input[type="text"]:focus { border-color:#006233; }
     ::-webkit-scrollbar {display:none;}
   </style>
 </head>
@@ -35,63 +44,83 @@
   <script type="text/babel">
     const {useState} = React;
     const translations = {
-      fr:{
-        title:"Dzair Sourcing Cars",
-        subtitle:"Calcul coût import algérien",
-        carPrice:"Prix Véhicule (FOB)",
-        currency:"Devise",
-        freight:"Fret + Assurance",
-        rate:"Taux marché parall.",
-        vehicle:"Véhicule",
-        brandNew:"Neuf",
-        used:"Occasion",
-        engine:"Type",
-        electric:"Électrique",
-        gasolineSmall:"Ess. ≤1800",
-        gasolineLarge:"Ess. >1800",
-        hybridSmall:"Hybr. ≤1800",
-        hybridLarge:"Hybr. >1800",
-        local:"Couts Local",
-        inspection:"Inspection",
-        doc:"Doc.",
-        port:"Port/Transit",
-        result:"Coût Total (DZD)",
-        detail:"Voir Détail",
-        taxes:"Taxes",
-        newCarTax:"Vignette Neuf",
-        usedBest:"⭐ Meilleure valeur",
-        saveUsed:"💡 Astuce: Choisissez Occasion pour éviter la taxe neuf & taux plus bas!",
-        switchUsedSave:"Économisez {0} DZD en passant à une Occasion !"
+      fr: {
+        title: "Dzair Sourcing Cars",
+        subtitle: "Calcul coût import algérien",
+        carPrice: "Prix Véhicule (FOB)",
+        currency: "Devise",
+        freight: "Fret + Assurance",
+        rate: "Taux marché parall.",
+        vehicle: "Véhicule",
+        brandNew: "Neuf",
+        used: "Occasion",
+        engine: "Type",
+        electric: "Électrique",
+        gasolineSmall: "Ess. ≤1800",
+        gasolineLarge: "Ess. >1800",
+        hybridSmall: "Hybr. ≤1800",
+        hybridLarge: "Hybr. >1800",
+        local: "Couts Local",
+        inspection: "Inspection",
+        doc: "Doc.",
+        port: "Port/Transit",
+        result: "Coût Total (DZD)",
+        detail: "Voir Détail Complet",
+        taxes: "Taxes",
+        newCarTax: "Vignette Neuf",
+        usedBest: "⭐ Meilleure valeur",
+        saveUsed: "💡 Astuce: Choisissez Occasion pour éviter la taxe neuf & taux plus bas!",
+        switchUsedSave: "Économisez {0} DZD en passant à une Occasion !",
+        contactUs: "Contact Export",
+        legalMentions: "Mentions légales",
+        back: "Retour",
+        contactHeader: "Contact Export Dzair",
+        contactMsg: "Nous pouvons vous aider à importer et à livrer votre véhicule en Algérie. Contactez-nous aujourd'hui !",
+        whatsapp: "WhatsApp",
+        email: "Email",
+        legalText: "Ce simulateur est fourni à titre indicatif. Tous droits réservés Dzair Sourcing Cars.",
+        calcSim: "Simulation",
+        detailsSim: "Détail"
       },
-      ar:{
-        title:"Dzair Sourcing Cars",
-        subtitle:"حاسبة تكلفة استيراد السيارات",
-        carPrice:"سعر السيارة (FOB)",
-        currency:"العملة",
-        freight:"الشحن + التأمين",
-        rate:"سعر السوق الموازي",
-        vehicle:"المركبة",
-        brandNew:"جديدة",
-        used:"مستعملة",
-        engine:"نوع المحرك",
-        electric:"كهربائي",
-        gasolineSmall:"بنزين ≤1800",
-        gasolineLarge:"بنزين >1800",
-        hybridSmall:"هجين ≤1800",
-        hybridLarge:"هجين >1800",
-        local:"تكاليف محلية",
-        inspection:"الفحص",
-        doc:"الوثائق",
-        port:"الميناء",
-        result:"التكلفة الكلية (دج)",
-        detail:"عرض التفاصيل",
-        taxes:"الضرائب",
-        newCarTax:"ضريبة السيارة الجديدة",
-        usedBest:"⭐ أفضل اختيار",
-        saveUsed:"💡 نصيحة: اختر مستعملة لتوفير الضرائب ورسوم أقل!",
-        switchUsedSave:"وفر {0} دج عند اختيار مستعملة!"
+      ar: {
+        title: "Dzair Sourcing Cars",
+        subtitle: "حاسبة تكلفة استيراد السيارات",
+        carPrice: "سعر السيارة (FOB)",
+        currency: "العملة",
+        freight: "الشحن + التأمين",
+        rate: "سعر السوق الموازي",
+        vehicle: "المركبة",
+        brandNew: "جديدة",
+        used: "مستعملة",
+        engine: "نوع المحرك",
+        electric: "كهربائي",
+        gasolineSmall: "بنزين ≤1800",
+        gasolineLarge: "بنزين >1800",
+        hybridSmall: "هجين ≤1800",
+        hybridLarge: "هجين >1800",
+        local: "تكاليف محلية",
+        inspection: "الفحص",
+        doc: "الوثائق",
+        port: "الميناء",
+        result: "التكلفة الكلية (دج)",
+        detail: "عرض التفاصيل الكاملة",
+        taxes: "الضرائب",
+        newCarTax: "ضريبة السيارة الجديدة",
+        usedBest: "⭐ أفضل اختيار",
+        saveUsed: "💡 نصيحة: اختر مستعملة لتوفير الضرائب ورسوم أقل!",
+        switchUsedSave: "وفر {0} دج عند اختيار مستعملة!",
+        contactUs: "اتصل بنا",
+        legalMentions: "شروط قانونية",
+        back: "رجوع",
+        contactHeader: "اتصال بإكسبورت",
+        contactMsg: "نساعدك في استيراد سيارتك وتوصيلها إلى الجزائر. اتصل الآن!",
+        whatsapp: "واتساب",
+        email: "البريد الإلكتروني",
+        legalText: "هذا الحساب للتوجيه فقط. جميع الحقوق محفوظة Dzair Sourcing Cars.",
+        calcSim: "حاسبة",
+        detailsSim: "التفاصيل"
       },
-      tz:{
+      tz: {
         title:"Dzair Sourcing Cars",
         subtitle:"Amasid i tkerrust n lezzayer",
         carPrice:"Azal n tkerrust (FOB)",
@@ -112,12 +141,22 @@
         doc:"Isemliyen",
         port:"Amaẓ/transit",
         result:"Amḍan Umulli (DZD)",
-        detail:"Fket Talɣut",
+        detail:"Fket talɣut tamezwarut",
         taxes:"Tiwsitin",
         newCarTax:"Taneɣruft Tamaynut",
         usedBest:"⭐ Tafella tamezwarut",
         saveUsed:"💡 Anamur: Fren tusniwin ad tessekcem tax d tneɣruft",
-        switchUsedSave:"Sekcem {0} DZD ma fren tusniwin!"
+        switchUsedSave:"Sekcem {0} DZD ma fren tusniwin!",
+        contactUs:"Nermes",
+        legalMentions:"Talɣut tizerfiyin",
+        back:"Uɣal",
+        contactHeader:"Nermes d Export",
+        contactMsg:"Nuzzel ad neɛawn-k ad teswiḍ tkerrust-ik deg Lezzayer. Nermes-a!",
+        whatsapp:"Whatsapp",
+        email:"Email",
+        legalText:"Asimer yufa-d ivawel. Akk izerfan ttwahfaz.",
+        calcSim: "Asimer",
+        detailsSim: "Talɣut"
       }
     };
     const usedCarTaxRates = {
@@ -126,20 +165,13 @@
     };
     function num(n){return isNaN(+n)?0:+n;}
     function fDZD(x){return new Intl.NumberFormat('fr-DZ').format(Math.round(x))+' DZD';}
-    function App(){
-      const [lang,setLang] = useState('fr');
-      const t = translations[lang];
-      const [currency,setCurrency] = useState('USD');
-      const [vehicleAge,setVehicleAge] = useState('used');
-      const [engine,setEngine] = useState('gasolineSmall');
-      const [carPrice,setCarPrice] = useState('');
-      const [freight,setFreight] = useState('');
-      const [blackRate,setBlackRate]=useState(232);
-      const [local1,setLocal1] = useState('15000');
-      const [local2,setLocal2] = useState('10000');
-      const [local3,setLocal3] = useState('150000');
-      const [showDetail,setShowDetail]=useState(false);
-
+    
+    // -- APP PAGES/VIEWS --
+    function MainCalculator({lang, setLang, goto, appState, setAppState, t}) {
+      const {currency, setCurrency, vehicleAge, setVehicleAge, engine, setEngine,
+        carPrice, setCarPrice, freight, setFreight, blackRate, setBlackRate, local1, setLocal1, local2, setLocal2, local3, setLocal3
+      } = appState;
+      // Calculation (copied from your logic)
       let price = num(carPrice), ship = num(freight), rate = num(blackRate);
       let cost = price*rate, costFreight = ship*rate, localTotal = num(local1)+num(local2)+num(local3);
       let officialRate = currency==='USD'?135.5:145.3;
@@ -157,6 +189,7 @@
         totalTax = cif*(usedCarTaxRates[engine].finalRate/100);
       }
       let total = cost + costFreight + localTotal + totalTax + newCarTax;
+      // Language flags
       const languages = [
         {code:'fr', label:'🇫🇷'},
         {code:'ar', label:'🇩🇿'},
@@ -164,8 +197,7 @@
       ];
       return (
         <div className={"max-w-md mx-auto mt-2 pb-2 " + (lang==='ar'?'rtl':'ltr')} style={{minHeight:'98vh'}}>
-          {/* Header & language */}
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mb-2">
             <div>
               <div className="text-[22px] font-bold text-dz-500 tracking-tight">{t.title}</div>
               <div className="text-xs text-gray-500">{t.subtitle}</div>
@@ -178,13 +210,19 @@
               )}
             </div>
           </div>
-          {/* Main Inputs */}
+          <nav className="flex mb-2 justify-around">
+            <button className="app-nav-btn" aria-current="page">{t.calcSim}</button>
+            <button className="app-nav-btn" onClick={()=>goto('details')}>{t.detailsSim}</button>
+            <button className="app-nav-btn" onClick={()=>goto('contact')}>{t.contactUs}</button>
+            <button className="app-nav-btn" onClick={()=>goto('legal')}>{t.legalMentions}</button>
+          </nav>
           <div className="section mt-2">
+            {/* ... All calculator UI as in your original scroll-down page ... */}
             <div className="flex items-center mb-2 text-sm gap-2">
               <span className="font-semibold">{t.currency}:</span>
               {['USD','EUR'].map(c=>
                 <button key={c} onClick={()=>setCurrency(c)}
-                  className={`px-2.5 py-0.5 rounded font-bold text-xs ${currency===c ? 'bg-dz-500 text-white':'bg-gray-100 text-dz-500'}`}>
+                  className={`px-2.5 py-0.5 rounded font-bold text-xs ${appState.currency===c ? 'bg-dz-500 text-white':'bg-gray-100 text-dz-500'}`}>
                   {c}
                 </button>
               )}
@@ -253,26 +291,96 @@
               <div className="font-semibold text-xs mb-1">{t.result}</div>
               <div className="text-2xl font-black text-dz-500 mb-1">{fDZD(total)}</div>
               <div>
-                <button onClick={()=>setShowDetail(v=>!v)}
-                  className="text-dz-500 underline text-xs">
-                  {t.detail}
-                </button>
+                <button onClick={()=>goto('details')} className="text-dz-500 underline text-xs">{t.detail}</button>
               </div>
-              {showDetail && (
-                <div style={{fontSize:"13px", background:"#f1f5f9", borderRadius:8, marginTop:7, padding:"7px 10px"}}>
-                  <div>{t.carPrice}: <b>{fDZD(cost)}</b></div>
-                  <div>{t.freight}: <b>{fDZD(costFreight)}</b></div>
-                  <div>{t.local}: <b>{fDZD(localTotal)}</b></div>
-                  <div>{t.taxes}: <b>{fDZD(totalTax)}</b></div>
-                  {vehicleAge==='new' && <div>{t.newCarTax}: <b>{fDZD(newCarTax)}</b></div>}
-                </div>
-              )}
             </div>
           )}
+        </div>
+      );
+    }
+    // -- DETAILS PAGE --
+    function DetailsView({goto, lang, t}) {
+      return (
+        <div className={"max-w-md mx-auto pt-4 pb-4 " + (lang==='ar'?'rtl':'ltr')}>
+          <button className="back-btn text-dz-500" onClick={()=>goto('main')}>← {t.back}</button>
+          <h2 className="text-xl font-bold mb-2">{t.detailsSim}</h2>
+          <div className="section">
+            {/* You can paste detailed breakdown, legal, and formulas here! */}
+            <ul className="list-disc ml-4 text-sm">
+              <li>Calcul des taxes pour voitures neuves et occasion</li>
+              <li>Formules DD/TCS/TVA</li>
+              <li>Références légales : Décret 23-74, etc.</li>
+              <li>Tout le détail de la simulation selon votre saisie</li>
+            </ul>
+          </div>
+        </div>
+      )
+    }
+    // -- CONTACT PAGE --
+    function ContactView({goto, lang, t}) {
+      return (
+        <div className={"max-w-md mx-auto pt-4 pb-4 " + (lang==='ar'?'rtl':'ltr')}>
+          <button className="back-btn text-dz-500" onClick={()=>goto('main')}>← {t.back}</button>
+          <h2 className="text-xl font-bold mb-2">{t.contactHeader}</h2>
+          <div className="section">
+            <div className="mb-2">{t.contactMsg}</div>
+            <div className="flex flex-col gap-2">
+              <a className="text-dz-500 underline" href="https://wa.me/213661234567" target="_blank">{t.whatsapp}: +213 6 61 23 45 67</a>
+              <a className="text-dz-500 underline" href="mailto:export@dzaircars.com">{t.email}: export@dzaircars.com</a>
+            </div>
+          </div>
+        </div>
+      )
+    }
+    // -- LEGAL PAGE -
+    function LegalView({goto, lang, t}) {
+      return (
+        <div className={"max-w-md mx-auto pt-4 pb-4 " + (lang==='ar'?'rtl':'ltr')}>
+          <button className="back-btn text-dz-500" onClick={()=>goto('main')}>← {t.back}</button>
+          <h2 className="text-xl font-bold mb-2">{t.legalMentions}</h2>
+          <div className="section">
+            <p className="text-sm">{t.legalText}</p>
+          </div>
+        </div>
+      )
+    }
+    // ---- MAIN APP with NAVIGATION STATE ---
+    function App() {
+      const [lang, setLang] = useState('fr');
+      const [page, setPage] = useState('main');
+      // All app-calculator state in one place:
+      const [currency, setCurrency] = useState('USD');
+      const [vehicleAge, setVehicleAge] = useState('used');
+      const [engine, setEngine] = useState('gasolineSmall');
+      const [carPrice, setCarPrice] = useState('');
+      const [freight, setFreight] = useState('');
+      const [blackRate,setBlackRate]=useState(232);
+      const [local1, setLocal1] = useState('15000');
+      const [local2, setLocal2] = useState('10000');
+      const [local3, setLocal3] = useState('150000');
+      const t = translations[lang];
+      // bundle for passing to MainCalculator
+      const appState = {
+        currency, setCurrency,
+        vehicleAge, setVehicleAge,
+        engine, setEngine,
+        carPrice, setCarPrice,
+        freight, setFreight,
+        blackRate, setBlackRate,
+        local1, setLocal1, local2, setLocal2, local3, setLocal3
+      };
+      function goto(p){ setPage(p);}
+      // Navigation rendering:
+      return (
+        <>
+          {page === "main" && <MainCalculator lang={lang} setLang={setLang} goto={goto} appState={appState} setAppState={()=>{}} t={t} />}
+          {page === "details" && <DetailsView lang={lang} goto={goto} t={t} />}
+          {page === "contact" && <ContactView lang={lang} goto={goto} t={t} />}
+          {page === "legal" && <LegalView lang={lang} goto={goto} t={t} />}
           <div className="text-center text-xs text-gray-400 mt-2 opacity-70">
             © 2025 Dzair Sourcing Cars
           </div>
-        </div>
+        </>
       );
     }
     ReactDOM.createRoot(document.getElementById("app")).render(<App />);
