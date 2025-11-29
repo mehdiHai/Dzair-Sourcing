@@ -48,21 +48,18 @@
       direction: ltr; 
       text-align: left; 
     }
-    
     input[type="number"]::-webkit-inner-spin-button,
     input[type="number"]::-webkit-outer-spin-button {
       -webkit-appearance: none;
       margin: 0;
     }
     input[type="number"] { -moz-appearance: textfield; }
-    
     .card {
       background: white;
       border-radius: 16px;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       border: 1px solid #e2e8f0;
     }
-    
     .input-field {
       width: 100%;
       padding: 12px 16px;
@@ -78,7 +75,6 @@
       background: white;
       box-shadow: 0 0 0 3px rgba(0, 98, 51, 0.1);
     }
-    
     .btn-primary {
       background: linear-gradient(135deg, #006233 0%, #004d28 100%);
       color: white;
@@ -92,19 +88,16 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(0, 98, 51, 0.4);
     }
-    
     .result-card {
       background: linear-gradient(135deg, #006233 0%, #004220 100%);
       color: white;
       border-radius: 16px;
       padding: 24px;
     }
-    
     .tag-yellow { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
     .tag-blue { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
     .tag-green { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
     .tag-red { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-    
     .animate-fade-in {
       animation: fadeIn 0.3s ease-out;
     }
@@ -112,15 +105,23 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    /* Extra badge */
+    .badge-best {
+      background: #dcfce7;
+      color: #166534;
+      border-radius: 8px;
+      font-size: 0.8em;
+      font-weight: bold;
+      padding: 2px 8px;
+      margin-left: 6px;
+    }
   </style>
 </head>
 <body class="min-h-screen">
   <div id="app"></div>
-  
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  
   <script type="text/babel">
     const { useState, useEffect, useCallback } = React;
 
@@ -325,21 +326,19 @@
       const [currency, setCurrency] = useState('USD');
       const [vehicleAge, setVehicleAge] = useState('used');
       const [engineType, setEngineType] = useState('gasolineSmall');
-      
       const [carPrice, setCarPrice] = useState('');
       const [freightInsurance, setFreightInsurance] = useState('');
       const [inspection, setInspection] = useState('15000');
       const [documentation, setDocumentation] = useState('10000');
       const [portBroker, setPortBroker] = useState('150000');
-      
       const [officialUSD, setOfficialUSD] = useState(defaultRates.officialUSD);
       const [officialEUR, setOfficialEUR] = useState(defaultRates.officialEUR);
       const [blackUSD, setBlackUSD] = useState(defaultRates.blackUSD);
       const [blackEUR, setBlackEUR] = useState(defaultRates.blackEUR);
       const [lastUpdate] = useState(new Date().toLocaleString());
-      
       const [results, setResults] = useState(null);
       const [showResults, setShowResults] = useState(false);
+      const [potentialUsedSavings, setPotentialUsedSavings] = useState(0);
 
       const t = translations[lang];
       const isRTL = lang === 'ar';
@@ -360,39 +359,30 @@
         const inspectionFee = parseFloat(inspection) || 0;
         const docFee = parseFloat(documentation) || 0;
         const portFee = parseFloat(portBroker) || 0;
-        
         const blackRate = currency === 'USD' ? blackUSD : blackEUR;
         const officialRate = currency === 'USD' ? officialUSD : officialEUR;
-        
         // Step 1: FOB in DZD (black market rate) - actual cost
         const fobDZD = price * blackRate;
-        
         // Step 2: Freight in DZD (black market rate) - actual cost
         const freightDZD = freight * blackRate;
-        
         // Step 3: Local expenses (already in DZD)
         const localExpenses = inspectionFee + docFee + portFee;
-        
         // Step 4: CIF for customs (official rate) - for tax calculation
         const cifCustoms = (price + freight) * officialRate;
-        
         // Step 5: Calculate taxes
         let taxes = {};
         let totalTax = 0;
         let newCarTaxAmount = 0;
-        
+
+        let usedCarTaxPreview = 0; // For promo!
+
         if (vehicleAge === 'new') {
-          // CORRECTED: Brand new car formula from image
-          // DD = CIF × 15%
+          // Brand new car formula
           const dd = cifCustoms * 0.15;
-          // TCS = CIF × 3%
           const tcs = cifCustoms * 0.03;
-          // TVA = (CIF + TCS + DD) × 19%
           const tva = (cifCustoms + tcs + dd) * 0.19;
-          // New Car Tax = 150,000 DZD (not 1,500,000)
           newCarTaxAmount = 150000;
           totalTax = dd + tcs + tva;
-          
           taxes = {
             dd,
             tcs,
@@ -402,22 +392,27 @@
             tvaRate: 19,
             breakdown: true
           };
+          // Simulate used car (same price, same rates, same engineType)
+          const rateInfo = usedCarTaxRates[engineType];
+          usedCarTaxPreview = cifCustoms * (rateInfo.finalRate / 100);
+          // Total used = fobDZD + freightDZD + localExpenses + usedCarTaxPreview
+          // Savings = (tax + 150k) - usedtax
+          setPotentialUsedSavings(totalTax + 150000 - usedCarTaxPreview);
+
         } else {
-          // CORRECTED: Used car - combined rate with discount from table
+          // Used car
           const rateInfo = usedCarTaxRates[engineType];
           totalTax = cifCustoms * (rateInfo.finalRate / 100);
-          
           taxes = {
             baseRate: rateInfo.baseRate,
             discount: rateInfo.discount,
             finalRate: rateInfo.finalRate,
             breakdown: false
           };
+          setPotentialUsedSavings(0);
         }
-        
         // Step 6: Total
         const total = fobDZD + freightDZD + localExpenses + totalTax + newCarTaxAmount;
-        
         setResults({
           price,
           freight,
@@ -433,15 +428,23 @@
           newCarTaxAmount,
           total,
           blackRate,
-          officialRate
+          officialRate,
+          usedCarTaxPreview
         });
-        
         setShowResults(true);
-      }, [carPrice, freightInsurance, inspection, documentation, portBroker, currency, blackUSD, blackEUR, officialUSD, officialEUR, vehicleAge, engineType]);
+      }, [
+        carPrice, freightInsurance, inspection, documentation, portBroker,
+        currency, blackUSD, blackEUR, officialUSD, officialEUR,
+        vehicleAge, engineType
+      ]);
 
       useEffect(() => {
         if (carPrice) calculate();
-      }, [carPrice, freightInsurance, inspection, documentation, portBroker, currency, blackUSD, blackEUR, officialUSD, officialEUR, vehicleAge, engineType, calculate]);
+      }, [
+        carPrice, freightInsurance, inspection, documentation, portBroker,
+        currency, blackUSD, blackEUR, officialUSD, officialEUR,
+        vehicleAge, engineType, calculate
+      ]);
 
       useEffect(() => {
         document.documentElement.lang = lang;
@@ -462,7 +465,6 @@
                     <p className="text-green-100 text-sm md:text-base opacity-90">{t.subtitle}</p>
                   </div>
                 </div>
-                
                 {/* Language Switcher */}
                 <div className="flex gap-2">
                   {[
@@ -486,6 +488,24 @@
               </div>
             </div>
           </header>
+
+          {/* Value CTA for Used Car if New is selected and price entered */}
+          {(vehicleAge === "new" && carPrice && potentialUsedSavings > 0) && (
+            <div className="max-w-6xl mx-auto px-4 mt-4">
+              <div className="bg-green-50 border border-green-200 p-4 rounded-xl flex items-center gap-4 shadow">
+                <span className="text-3xl">💡</span>
+                <div>
+                  <strong className="text-lg text-green-700">
+                    Save at least {formatCurrency(potentialUsedSavings)} by choosing a <span className="font-extrabold">Used Car!</span>
+                  </strong>
+                  <div className="text-green-800 text-sm mt-1">
+                    Most clients choose "Occasion (Used)" to avoid the 150,000 DZD new-car tax and get much lower customs rates.<br />
+                    <span className="font-bold">💰 Upgrade to Used &amp; Save Big on Import Fees!</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Two-Rate System Banner */}
           <div className="max-w-6xl mx-auto px-4 mt-6">
@@ -523,7 +543,6 @@
                     <span className="text-2xl">🚙</span>
                     {t.vehicleInfo}
                   </h2>
-                  
                   {/* Currency */}
                   <div className="mb-5">
                     <label className="block text-sm font-medium text-gray-600 mb-2">{t.currency}</label>
@@ -543,7 +562,6 @@
                       ))}
                     </div>
                   </div>
-
                   {/* Car Price */}
                   <div className="mb-5">
                     <label className="block text-sm font-medium text-gray-600 mb-2">{t.carPrice}</label>
@@ -560,7 +578,6 @@
                       />
                     </div>
                   </div>
-
                   {/* Vehicle Age */}
                   <div className="mb-5">
                     <label className="block text-sm font-medium text-gray-600 mb-2">{t.vehicleAge}</label>
@@ -580,11 +597,13 @@
                         >
                           <span>{icon}</span>
                           <span className="text-sm">{label}</span>
+                          {value === 'used' && (
+                            <span className="badge-best ml-1">⭐ Best Value</span>
+                          )}
                         </button>
                       ))}
                     </div>
                   </div>
-
                   {/* Engine Type - Only for used cars */}
                   {vehicleAge === 'used' && (
                     <div>
@@ -621,7 +640,6 @@
                     </div>
                   )}
                 </div>
-
                 {/* Foreign Costs */}
                 <div className="card p-6 border-l-4 border-amber-400">
                   <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
@@ -629,7 +647,6 @@
                     {t.foreignCosts}
                     <span className="tag-yellow text-xs px-2 py-1 rounded-full ml-2">{t.blackMarketRate}</span>
                   </h2>
-                  
                   <div>
                     <label className="block text-sm font-medium text-gray-600 mb-2">{t.freightInsurance}</label>
                     <div className="relative">
@@ -646,7 +663,6 @@
                     </div>
                   </div>
                 </div>
-
                 {/* Local Costs */}
                 <div className="card p-6 border-l-4 border-green-500">
                   <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
@@ -654,7 +670,6 @@
                     {t.localCosts}
                     <span className="tag-green text-xs px-2 py-1 rounded-full ml-2">DZD</span>
                   </h2>
-                  
                   <div className="space-y-4">
                     {[
                       { key: 'inspection', value: inspection, setter: setInspection, placeholder: '15000' },
@@ -677,14 +692,12 @@
                     ))}
                   </div>
                 </div>
-
                 {/* Exchange Rates */}
                 <div className="card p-6">
                   <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
                     <span className="text-2xl">💱</span>
                     {t.exchangeRates}
                   </h2>
-                  
                   <div className="grid grid-cols-2 gap-4">
                     {/* Black Market */}
                     <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
@@ -713,7 +726,6 @@
                         </div>
                       </div>
                     </div>
-                    
                     {/* Official */}
                     <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
                       <h3 className="text-sm font-semibold text-blue-800 mb-3 flex items-center gap-2">
@@ -745,7 +757,6 @@
                   </div>
                 </div>
               </div>
-
               {/* Results Section */}
               <div className="lg:sticky lg:top-6 h-fit">
                 {showResults && results ? (
@@ -757,7 +768,6 @@
                         {t.results}
                       </h2>
                     </div>
-
                     <div className="p-6 space-y-4">
                       {/* FOB Price */}
                       <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
@@ -770,7 +780,6 @@
                         </div>
                         <p className="text-xs text-amber-500 mt-2">{formatCurrency(results.price, currency)} × {formatNumber(results.blackRate)}</p>
                       </div>
-
                       {/* Freight */}
                       <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
                         <div className="flex items-start justify-between">
@@ -782,7 +791,6 @@
                         </div>
                         <p className="text-xs text-amber-500 mt-2">{formatCurrency(results.freight, currency)} × {formatNumber(results.blackRate)}</p>
                       </div>
-
                       {/* Local Expenses */}
                       <div className="p-4 rounded-xl bg-green-50 border border-green-200">
                         <div className="flex items-start justify-between mb-3">
@@ -795,7 +803,6 @@
                           <div className="flex justify-between"><span>• {t.portBroker}</span><span>{formatCurrency(results.portFee)}</span></div>
                         </div>
                       </div>
-
                       {/* CIF for Customs */}
                       <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
                         <div className="flex items-start justify-between">
@@ -808,7 +815,6 @@
                         <p className="text-xs text-blue-500 mt-2">({formatCurrency(results.price, currency)} + {formatCurrency(results.freight, currency)}) × {formatNumber(results.officialRate)}</p>
                         <p className="text-xs text-blue-400 mt-1 italic">{t.forTaxCalc}</p>
                       </div>
-
                       {/* Customs Taxes */}
                       <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
                         <div className="flex items-start justify-between mb-3">
@@ -818,7 +824,6 @@
                           </div>
                           <span className="font-bold text-lg text-blue-900">{formatCurrency(results.totalTax)}</span>
                         </div>
-                        
                         {results.taxes.breakdown ? (
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between items-center p-2 bg-white rounded-lg">
@@ -833,9 +838,7 @@
                               <span className="text-gray-600">{t.tva} ({results.taxes.tvaRate}%)</span>
                               <span className="font-semibold text-gray-800">{formatCurrency(results.taxes.tva)}</span>
                             </div>
-                            <p className="text-xs text-blue-500 mt-2 italic">
-                              TVA = (CIF + DD + TCS) × 19%
-                            </p>
+                            <p className="text-xs text-blue-500 mt-2 italic">TVA = (CIF + DD + TCS) × 19%</p>
                           </div>
                         ) : (
                           <div className="space-y-2 text-sm">
@@ -854,7 +857,6 @@
                           </div>
                         )}
                       </div>
-
                       {/* New Car Tax */}
                       <div className={`p-4 rounded-xl ${vehicleAge === 'new' ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
                         <div className="flex items-start justify-between">
@@ -870,8 +872,17 @@
                         {vehicleAge === 'used' && (
                           <p className="text-xs text-green-600 mt-2">💚 {t.saved}: {formatCurrency(150000)}</p>
                         )}
-                      </div>
 
+                        {/* Promo inside result for new cars */}
+                        {vehicleAge === 'new' && potentialUsedSavings > 0 && (
+                          <div className="mt-3 text-green-800 text-xs font-bold flex items-center gap-2">
+                            <span>💡</span>
+                            <span>
+                              You could save approximately {formatCurrency(potentialUsedSavings)} by switching to a Used Car now!
+                            </span>
+                          </div>
+                        )}
+                      </div>
                       {/* Total */}
                       <div className="result-card">
                         <div className="flex items-center justify-between">
@@ -880,7 +891,6 @@
                         </div>
                       </div>
                     </div>
-
                     {/* Legal References */}
                     <div className="px-6 pb-6">
                       <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
@@ -903,7 +913,6 @@
               </div>
             </div>
           </div>
-
           {/* Footer */}
           <footer className="mt-12 py-6 border-t border-gray-200">
             <div className="max-w-6xl mx-auto px-4 text-center">
