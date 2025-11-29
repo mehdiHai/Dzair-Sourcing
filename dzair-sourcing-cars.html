@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dzair Sourcing Cars - Calculateur d'Importation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dzGreen: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              300: '#86efac',
+              400: '#4ade80',
+              500: '#006233',
+              600: '#005229',
+              700: '#004220',
+              800: '#003318',
+              900: '#002410'
+            },
+            dzRed: {
+              400: '#f87171',
+              500: '#D21034',
+              600: '#b80e2c'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+    .rtl { 
+      direction: rtl; 
+      text-align: right; 
+      font-family: 'Cairo', sans-serif;
+    }
+    .ltr { 
+      direction: ltr; 
+      text-align: left; 
+    }
+    
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] { -moz-appearance: textfield; }
+    
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      border: 1px solid #e2e8f0;
+    }
+    
+    .input-field {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 2px solid #e2e8f0;
+      background: #f8fafc;
+      transition: all 0.2s ease;
+      font-size: 15px;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #006233;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(0, 98, 51, 0.1);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #006233 0%, #004d28 100%);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(0, 98, 51, 0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 98, 51, 0.4);
+    }
+    
+    .result-card {
+      background: linear-gradient(135deg, #006233 0%, #004220 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 24px;
+    }
+    
+    .tag-yellow { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .tag-blue { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+    .tag-green { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .tag-red { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div id="app"></div>
+  
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+
+    const translations = {
+      ar: {
+        title: 'Dzair Sourcing Cars',
+        subtitle: 'حاسبة تكلفة استيراد السيارات في الجزائر',
+        currency: 'العملة',
+        usd: 'دولار أمريكي',
+        eur: 'يورو',
+        vehicleInfo: 'معلومات السيارة',
+        carPrice: 'سعر السيارة (FOB)',
+        vehicleAge: 'حالة السيارة',
+        brandNew: 'جديدة (0 كم)',
+        usedUnder3: 'مستعملة (أقل من 3 سنوات)',
+        engineType: 'نوع المحرك',
+        electric: 'كهربائي',
+        gasolineSmall: 'بنزين ≤1800 سم³',
+        gasolineLarge: 'بنزين >1800 سم³',
+        hybridSmall: 'هجين ≤1800 سم³',
+        hybridLarge: 'هجين >1800 سم³',
+        foreignCosts: 'التكاليف بالعملة الأجنبية',
+        freightInsurance: 'الشحن + التأمين',
+        localCosts: 'التكاليف المحلية (DZD)',
+        inspection: 'رسوم الفحص',
+        documentation: 'رسوم الوثائق',
+        portBroker: 'حقوق الميناء والمخلص',
+        exchangeRates: 'أسعار الصرف',
+        officialRate: 'السعر الرسمي',
+        blackMarketRate: 'السعر الموازي',
+        lastUpdate: 'آخر تحديث',
+        results: 'تفاصيل التكلفة',
+        fobPrice: 'سعر الشراء (FOB)',
+        atBlackRate: 'بسعر السوق الموازي',
+        freightCost: 'الشحن + التأمين',
+        otherFees: 'رسوم أخرى',
+        customsCIF: 'قيمة CIF الجمركية',
+        atOfficialRate: 'بالسعر الرسمي',
+        forTaxCalc: '(تستخدم لحساب الرسوم الجمركية)',
+        customsRights: 'حقوق الجمركة',
+        customsTaxes: 'الرسوم الجمركية',
+        onCIF: 'على قيمة CIF',
+        combinedRate: 'معدل مجمع',
+        discount: 'تخفيض',
+        baseRate: 'المعدل الأساسي',
+        finalRate: 'المعدل النهائي',
+        dd: 'الرسوم الجمركية (DD)',
+        tcs: 'رسم التضامن (TCS)',
+        tva: 'الرسم على القيمة المضافة (TVA)',
+        newCarTax: 'قسيمة السيارات الجديدة',
+        notApplicable: 'غير مطبقة',
+        saved: 'توفير',
+        totalCustoms: 'إجمالي الرسوم الجمركية',
+        totalCost: 'التكلفة الإجمالية',
+        twoRateExplain: 'نظام السعرين',
+        blackMarketInfo: 'يُستخدم لحساب تكلفة الشراء والشحن الفعلية',
+        officialInfo: 'يُستخدم من قبل الجمارك لحساب الرسوم',
+        enterPrice: 'أدخل سعر السيارة لرؤية الحساب',
+        legalRef: 'المراجع القانونية',
+        decree: 'المرسوم 23-74 (20 فبراير 2023)',
+        article: 'المادة 110 من قانون المالية 2020',
+        cifFormula: 'CIF = سعر السيارة + الشحن + التأمين'
+      },
+      fr: {
+        title: 'Dzair Sourcing Cars',
+        subtitle: 'Calculateur de Coût d\'Importation de Véhicules en Algérie',
+        currency: 'Devise',
+        usd: 'Dollar US',
+        eur: 'Euro',
+        vehicleInfo: 'Informations du Véhicule',
+        carPrice: 'Prix du véhicule (FOB)',
+        vehicleAge: 'État du véhicule',
+        brandNew: 'Neuf (0 km)',
+        usedUnder3: 'Occasion (moins de 3 ans)',
+        engineType: 'Type de moteur',
+        electric: 'Électrique',
+        gasolineSmall: 'Essence ≤1800 cm³',
+        gasolineLarge: 'Essence >1800 cm³',
+        hybridSmall: 'Hybride ≤1800 cm³',
+        hybridLarge: 'Hybride >1800 cm³',
+        foreignCosts: 'Coûts en Devise Étrangère',
+        freightInsurance: 'Fret + Assurance',
+        localCosts: 'Coûts Locaux (DZD)',
+        inspection: 'Frais d\'inspection',
+        documentation: 'Frais de documentation',
+        portBroker: 'Droits de port + Transitaire',
+        exchangeRates: 'Taux de Change',
+        officialRate: 'Taux Officiel',
+        blackMarketRate: 'Taux Parallèle',
+        lastUpdate: 'Dernière mise à jour',
+        results: 'Détail des Coûts',
+        fobPrice: 'Prix d\'achat (FOB)',
+        atBlackRate: 'au taux parallèle',
+        freightCost: 'Fret + Assurance',
+        otherFees: 'Autres frais',
+        customsCIF: 'Valeur CIF Douanière',
+        atOfficialRate: 'au taux officiel',
+        forTaxCalc: '(utilisé pour le calcul des droits de douane)',
+        customsRights: 'Droits de Douane',
+        customsTaxes: 'Taxes Douanières',
+        onCIF: 'sur CIF',
+        combinedRate: 'Taux combiné',
+        discount: 'Réduction',
+        baseRate: 'Taux de base',
+        finalRate: 'Taux final',
+        dd: 'Droits de Douane (DD)',
+        tcs: 'Taxe de Solidarité (TCS)',
+        tva: 'TVA',
+        newCarTax: 'Vignette Véhicule Neuf',
+        notApplicable: 'Non applicable',
+        saved: 'Économisé',
+        totalCustoms: 'Total Droits de Douane',
+        totalCost: 'Coût Total',
+        twoRateExplain: 'Système à Deux Taux',
+        blackMarketInfo: 'Utilisé pour les coûts réels d\'achat et d\'expédition',
+        officialInfo: 'Utilisé par les douanes pour calculer les droits',
+        enterPrice: 'Entrez le prix du véhicule pour voir le calcul',
+        legalRef: 'Références Légales',
+        decree: 'Décret 23-74 (20 février 2023)',
+        article: 'Article 110 de la Loi de Finances 2020',
+        cifFormula: 'CIF = Prix véhicule + Fret + Assurance'
+      },
+      tz: {
+        title: 'Dzair Sourcing Cars',
+        subtitle: 'Amessiḍen n Wezwi n Tkerrust di Lezzayer',
+        currency: 'Tadrimt',
+        usd: 'Adular Amarikani',
+        eur: 'Uru',
+        vehicleInfo: 'Talɣut ɣef Tkerrust',
+        carPrice: 'Azal n tkerrust (FOB)',
+        vehicleAge: 'Addad n tkerrust',
+        brandNew: 'Tamaynut (0 km)',
+        usedUnder3: 'Tusniwin (ddaw 3 n iseggasen)',
+        engineType: 'Anaw n umsedday',
+        electric: 'Elektrik',
+        gasolineSmall: 'Lisans ≤1800 cm³',
+        gasolineLarge: 'Lisans >1800 cm³',
+        hybridSmall: 'Ahybrid ≤1800 cm³',
+        hybridLarge: 'Ahybrid >1800 cm³',
+        foreignCosts: 'Idrimen s Tedrimt Tabeṛṛanit',
+        freightInsurance: 'Asiweḍ + Tasertit',
+        localCosts: 'Idrimen Idigan (DZD)',
+        inspection: 'Idrimen n usenqed',
+        documentation: 'Idrimen n isemliyen',
+        portBroker: 'Izerfan n umaẓ + Amεessas',
+        exchangeRates: 'Azal n Usnifel',
+        officialRate: 'Azal Unṣib',
+        blackMarketRate: 'Azal Azeggan',
+        lastUpdate: 'Aleqqem aneggaru',
+        results: 'Talɣut n Wezwi',
+        fobPrice: 'Azal n usɣ (FOB)',
+        atBlackRate: 's uzal azeggan',
+        freightCost: 'Asiweḍ + Tasertit',
+        otherFees: 'Idrimen nniḍen',
+        customsCIF: 'Azal CIF n Lmerk',
+        atOfficialRate: 's uzal unṣib',
+        forTaxCalc: '(yettuseqdac i ussiḍen n izerfan)',
+        customsRights: 'Izerfan n Lmerk',
+        customsTaxes: 'Tiwsitin n Lmerk',
+        onCIF: 'ɣef CIF',
+        combinedRate: 'Azal amseddu',
+        discount: 'Asenqes',
+        baseRate: 'Azal ameslaw',
+        finalRate: 'Azal aneggaru',
+        dd: 'Izerfan n Lmerk (DD)',
+        tcs: 'Tawsit n Tiddukla (TCS)',
+        tva: 'TVA',
+        newCarTax: 'Taneɣruft n Tkerrust Tamaynut',
+        notApplicable: 'Ur tettwasnas ara',
+        saved: 'Yettwaseḥres',
+        totalCustoms: 'Amḍan n Izerfan',
+        totalCost: 'Amḍan Umulli',
+        twoRateExplain: 'Anagraw n Sin Yizulay',
+        blackMarketInfo: 'Yettuseqdac i wezwi n usɣ d usiweḍ',
+        officialInfo: 'Yettuseqdac sɣur Lmerk i ussiḍen n izerfan',
+        enterPrice: 'Sekcem azal n tkerrust',
+        legalRef: 'Tiselkimin Tizerfiyin',
+        decree: 'Amgired 23-74 (20 Fuṛar 2023)',
+        article: 'Amagrad 110 n Usaḍuf n Tedrimt 2020',
+        cifFormula: 'CIF = Azal + Asiweḍ + Tasertit'
+      }
+    };
+
+    // CORRECTED Tax rates for used cars
+    const usedCarTaxRates = {
+      electric: { baseRate: 57.08, discount: 80, finalRate: 11.42 },
+      gasolineSmall: { baseRate: 39.23, discount: 50, finalRate: 19.62 },
+      gasolineLarge: { baseRate: 151.33, discount: 20, finalRate: 121.06 },
+      hybridSmall: { baseRate: 39.23, discount: 50, finalRate: 19.62 },
+      hybridLarge: { baseRate: 151.33, discount: 20, finalRate: 121.06 }
+    };
+
+    const defaultRates = {
+      officialUSD: 135.5,
+      officialEUR: 145.3,
+      blackUSD: 232,
+      blackEUR: 250
+    };
+
+    function DzairCalculator() {
+      const [lang, setLang] = useState('fr');
+      const [currency, setCurrency] = useState('USD');
+      const [vehicleAge, setVehicleAge] = useState('used');
+      const [engineType, setEngineType] = useState('gasolineSmall');
+      
+      const [carPrice, setCarPrice] = useState('');
+      const [freightInsurance, setFreightInsurance] = useState('');
+      const [inspection, setInspection] = useState('15000');
+      const [documentation, setDocumentation] = useState('10000');
+      const [portBroker, setPortBroker] = useState('150000');
+      
+      const [officialUSD, setOfficialUSD] = useState(defaultRates.officialUSD);
+      const [officialEUR, setOfficialEUR] = useState(defaultRates.officialEUR);
+      const [blackUSD, setBlackUSD] = useState(defaultRates.blackUSD);
+      const [blackEUR, setBlackEUR] = useState(defaultRates.blackEUR);
+      const [lastUpdate] = useState(new Date().toLocaleString());
+      
+      const [results, setResults] = useState(null);
+      const [showResults, setShowResults] = useState(false);
+
+      const t = translations[lang];
+      const isRTL = lang === 'ar';
+
+      const formatNumber = (num) => {
+        return new Intl.NumberFormat('fr-DZ').format(Math.round(num));
+      };
+
+      const formatCurrency = (num, curr = 'DZD') => {
+        if (curr === 'DZD') return `${formatNumber(num)} DZD`;
+        const symbol = curr === 'USD' ? '$' : '€';
+        return `${symbol}${formatNumber(num)}`;
+      };
+
+      const calculate = useCallback(() => {
+        const price = parseFloat(carPrice) || 0;
+        const freight = parseFloat(freightInsurance) || 0;
+        const inspectionFee = parseFloat(inspection) || 0;
+        const docFee = parseFloat(documentation) || 0;
+        const portFee = parseFloat(portBroker) || 0;
+        
+        const blackRate = currency === 'USD' ? blackUSD : blackEUR;
+        const officialRate = currency === 'USD' ? officialUSD : officialEUR;
+        
+        // Step 1: FOB in DZD (black market rate) - actual cost
+        const fobDZD = price * blackRate;
+        
+        // Step 2: Freight in DZD (black market rate) - actual cost
+        const freightDZD = freight * blackRate;
+        
+        // Step 3: Local expenses (already in DZD)
+        const localExpenses = inspectionFee + docFee + portFee;
+        
+        // Step 4: CIF for customs (official rate) - for tax calculation
+        const cifCustoms = (price + freight) * officialRate;
+        
+        // Step 5: Calculate taxes
+        let taxes = {};
+        let totalTax = 0;
+        let newCarTaxAmount = 0;
+        
+        if (vehicleAge === 'new') {
+          // CORRECTED: Brand new car formula from image
+          // DD = CIF × 15%
+          const dd = cifCustoms * 0.15;
+          // TCS = CIF × 3%
+          const tcs = cifCustoms * 0.03;
+          // TVA = (CIF + TCS + DD) × 19%
+          const tva = (cifCustoms + tcs + dd) * 0.19;
+          // New Car Tax = 150,000 DZD (not 1,500,000)
+          newCarTaxAmount = 150000;
+          totalTax = dd + tcs + tva;
+          
+          taxes = {
+            dd,
+            tcs,
+            tva,
+            ddRate: 15,
+            tcsRate: 3,
+            tvaRate: 19,
+            breakdown: true
+          };
+        } else {
+          // CORRECTED: Used car - combined rate with discount from table
+          const rateInfo = usedCarTaxRates[engineType];
+          totalTax = cifCustoms * (rateInfo.finalRate / 100);
+          
+          taxes = {
+            baseRate: rateInfo.baseRate,
+            discount: rateInfo.discount,
+            finalRate: rateInfo.finalRate,
+            breakdown: false
+          };
+        }
+        
+        // Step 6: Total
+        const total = fobDZD + freightDZD + localExpenses + totalTax + newCarTaxAmount;
+        
+        setResults({
+          price,
+          freight,
+          fobDZD,
+          freightDZD,
+          inspectionFee,
+          docFee,
+          portFee,
+          localExpenses,
+          cifCustoms,
+          taxes,
+          totalTax,
+          newCarTaxAmount,
+          total,
+          blackRate,
+          officialRate
+        });
+        
+        setShowResults(true);
+      }, [carPrice, freightInsurance, inspection, documentation, portBroker, currency, blackUSD, blackEUR, officialUSD, officialEUR, vehicleAge, engineType]);
+
+      useEffect(() => {
+        if (carPrice) calculate();
+      }, [carPrice, freightInsurance, inspection, documentation, portBroker, currency, blackUSD, blackEUR, officialUSD, officialEUR, vehicleAge, engineType, calculate]);
+
+      useEffect(() => {
+        document.documentElement.lang = lang;
+      }, [lang]);
+
+      return (
+        <div className={`min-h-screen pb-12 ${isRTL ? 'rtl' : 'ltr'}`}>
+          {/* Header */}
+          <header className="bg-gradient-to-r from-[#006233] to-[#004d28] text-white py-6 px-4 shadow-lg">
+            <div className="max-w-6xl mx-auto">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                    <span className="text-2xl">🚗</span>
+                  </div>
+                  <div>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t.title}</h1>
+                    <p className="text-green-100 text-sm md:text-base opacity-90">{t.subtitle}</p>
+                  </div>
+                </div>
+                
+                {/* Language Switcher */}
+                <div className="flex gap-2">
+                  {[
+                    { code: 'ar', label: 'العربية' },
+                    { code: 'tz', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ' },
+                    { code: 'fr', label: 'Français' }
+                  ].map(({ code, label }) => (
+                    <button
+                      key={code}
+                      onClick={() => setLang(code)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        lang === code
+                          ? 'bg-white text-[#006233] shadow-md'
+                          : 'bg-white/20 text-white hover:bg-white/30'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Two-Rate System Banner */}
+          <div className="max-w-6xl mx-auto px-4 mt-6">
+            <div className="card p-5">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <span className="text-xl">ℹ️</span>
+                {t.twoRateExplain}
+              </h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="flex items-start gap-3 p-4 rounded-xl tag-yellow">
+                  <div className="w-4 h-4 rounded-full bg-amber-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="font-semibold text-amber-800">{t.blackMarketRate}</span>
+                    <p className="text-amber-700 text-sm mt-1">{t.blackMarketInfo}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-4 rounded-xl tag-blue">
+                  <div className="w-4 h-4 rounded-full bg-blue-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="font-semibold text-blue-800">{t.officialRate}</span>
+                    <p className="text-blue-700 text-sm mt-1">{t.officialInfo}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-6xl mx-auto px-4 mt-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Input Section */}
+              <div className="space-y-6">
+                {/* Vehicle Information */}
+                <div className="card p-6">
+                  <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
+                    <span className="text-2xl">🚙</span>
+                    {t.vehicleInfo}
+                  </h2>
+                  
+                  {/* Currency */}
+                  <div className="mb-5">
+                    <label className="block text-sm font-medium text-gray-600 mb-2">{t.currency}</label>
+                    <div className="flex gap-3">
+                      {['USD', 'EUR'].map((curr) => (
+                        <button
+                          key={curr}
+                          onClick={() => setCurrency(curr)}
+                          className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
+                            currency === curr
+                              ? 'bg-[#006233] text-white shadow-lg'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                          }`}
+                        >
+                          {curr === 'USD' ? '$ USD' : '€ EUR'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Car Price */}
+                  <div className="mb-5">
+                    <label className="block text-sm font-medium text-gray-600 mb-2">{t.carPrice}</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">
+                        {currency === 'USD' ? '$' : '€'}
+                      </span>
+                      <input
+                        type="number"
+                        value={carPrice}
+                        onChange={(e) => setCarPrice(e.target.value)}
+                        placeholder="12300"
+                        className="input-field pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Vehicle Age */}
+                  <div className="mb-5">
+                    <label className="block text-sm font-medium text-gray-600 mb-2">{t.vehicleAge}</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { value: 'new', label: t.brandNew, icon: '✨' },
+                        { value: 'used', label: t.usedUnder3, icon: '🚗' }
+                      ].map(({ value, label, icon }) => (
+                        <button
+                          key={value}
+                          onClick={() => setVehicleAge(value)}
+                          className={`py-3 px-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+                            vehicleAge === value
+                              ? 'bg-[#006233] text-white shadow-lg'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                          }`}
+                        >
+                          <span>{icon}</span>
+                          <span className="text-sm">{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Engine Type - Only for used cars */}
+                  {vehicleAge === 'used' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-2">{t.engineType}</label>
+                      <div className="grid grid-cols-1 gap-2">
+                        {[
+                          { value: 'electric', label: t.electric, icon: '⚡', rate: '11.42%' },
+                          { value: 'gasolineSmall', label: t.gasolineSmall, icon: '⛽', rate: '19.62%' },
+                          { value: 'gasolineLarge', label: t.gasolineLarge, icon: '⛽', rate: '121.06%' },
+                          { value: 'hybridSmall', label: t.hybridSmall, icon: '🔋', rate: '19.62%' },
+                          { value: 'hybridLarge', label: t.hybridLarge, icon: '🔋', rate: '121.06%' }
+                        ].map(({ value, label, icon, rate }) => (
+                          <button
+                            key={value}
+                            onClick={() => setEngineType(value)}
+                            className={`py-3 px-4 rounded-xl font-medium transition-all flex items-center justify-between ${
+                              engineType === value
+                                ? 'bg-[#006233] text-white shadow-lg'
+                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span>{icon}</span>
+                              <span className="text-sm">{label}</span>
+                            </span>
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              engineType === value ? 'bg-white/20' : 'bg-gray-200'
+                            }`}>
+                              {rate}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Foreign Costs */}
+                <div className="card p-6 border-l-4 border-amber-400">
+                  <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
+                    <span className="text-2xl">🚢</span>
+                    {t.foreignCosts}
+                    <span className="tag-yellow text-xs px-2 py-1 rounded-full ml-2">{t.blackMarketRate}</span>
+                  </h2>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-2">{t.freightInsurance}</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">
+                        {currency === 'USD' ? '$' : '€'}
+                      </span>
+                      <input
+                        type="number"
+                        value={freightInsurance}
+                        onChange={(e) => setFreightInsurance(e.target.value)}
+                        placeholder="1500"
+                        className="input-field pl-10"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Local Costs */}
+                <div className="card p-6 border-l-4 border-green-500">
+                  <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
+                    <span className="text-2xl">📋</span>
+                    {t.localCosts}
+                    <span className="tag-green text-xs px-2 py-1 rounded-full ml-2">DZD</span>
+                  </h2>
+                  
+                  <div className="space-y-4">
+                    {[
+                      { key: 'inspection', value: inspection, setter: setInspection, placeholder: '15000' },
+                      { key: 'documentation', value: documentation, setter: setDocumentation, placeholder: '10000' },
+                      { key: 'portBroker', value: portBroker, setter: setPortBroker, placeholder: '150000' }
+                    ].map(({ key, value, setter, placeholder }) => (
+                      <div key={key}>
+                        <label className="block text-sm font-medium text-gray-600 mb-2">{t[key]}</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={value}
+                            onChange={(e) => setter(e.target.value)}
+                            placeholder={placeholder}
+                            className="input-field"
+                          />
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">DZD</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Exchange Rates */}
+                <div className="card p-6">
+                  <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
+                    <span className="text-2xl">💱</span>
+                    {t.exchangeRates}
+                  </h2>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Black Market */}
+                    <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+                      <h3 className="text-sm font-semibold text-amber-800 mb-3 flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-amber-500" />
+                        {t.blackMarketRate}
+                      </h3>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs text-amber-700 mb-1">USD/DZD</label>
+                          <input
+                            type="number"
+                            value={blackUSD}
+                            onChange={(e) => setBlackUSD(parseFloat(e.target.value) || 0)}
+                            className="w-full py-2 px-3 rounded-lg bg-white border border-amber-300 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-amber-700 mb-1">EUR/DZD</label>
+                          <input
+                            type="number"
+                            value={blackEUR}
+                            onChange={(e) => setBlackEUR(parseFloat(e.target.value) || 0)}
+                            className="w-full py-2 px-3 rounded-lg bg-white border border-amber-300 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Official */}
+                    <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
+                      <h3 className="text-sm font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-blue-500" />
+                        {t.officialRate}
+                      </h3>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs text-blue-700 mb-1">USD/DZD</label>
+                          <input
+                            type="number"
+                            value={officialUSD}
+                            onChange={(e) => setOfficialUSD(parseFloat(e.target.value) || 0)}
+                            className="w-full py-2 px-3 rounded-lg bg-white border border-blue-300 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-blue-700 mb-1">EUR/DZD</label>
+                          <input
+                            type="number"
+                            value={officialEUR}
+                            onChange={(e) => setOfficialEUR(parseFloat(e.target.value) || 0)}
+                            className="w-full py-2 px-3 rounded-lg bg-white border border-blue-300 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-blue-600 mt-3">{t.lastUpdate}: {lastUpdate}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Results Section */}
+              <div className="lg:sticky lg:top-6 h-fit">
+                {showResults && results ? (
+                  <div className="card overflow-hidden animate-fade-in">
+                    {/* Results Header */}
+                    <div className="bg-gradient-to-r from-[#006233] to-[#004d28] text-white p-6">
+                      <h2 className="text-2xl font-bold flex items-center gap-2">
+                        <span>📊</span>
+                        {t.results}
+                      </h2>
+                    </div>
+
+                    <div className="p-6 space-y-4">
+                      {/* FOB Price */}
+                      <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <span className="font-semibold text-amber-800">🚗 {t.fobPrice}</span>
+                            <p className="text-xs text-amber-600 mt-1">@ {t.atBlackRate}: {formatNumber(results.blackRate)} DZD/{currency}</p>
+                          </div>
+                          <span className="font-bold text-lg text-amber-900">{formatCurrency(results.fobDZD)}</span>
+                        </div>
+                        <p className="text-xs text-amber-500 mt-2">{formatCurrency(results.price, currency)} × {formatNumber(results.blackRate)}</p>
+                      </div>
+
+                      {/* Freight */}
+                      <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <span className="font-semibold text-amber-800">🚢 {t.freightCost}</span>
+                            <p className="text-xs text-amber-600 mt-1">@ {t.atBlackRate}: {formatNumber(results.blackRate)} DZD/{currency}</p>
+                          </div>
+                          <span className="font-bold text-lg text-amber-900">{formatCurrency(results.freightDZD)}</span>
+                        </div>
+                        <p className="text-xs text-amber-500 mt-2">{formatCurrency(results.freight, currency)} × {formatNumber(results.blackRate)}</p>
+                      </div>
+
+                      {/* Local Expenses */}
+                      <div className="p-4 rounded-xl bg-green-50 border border-green-200">
+                        <div className="flex items-start justify-between mb-3">
+                          <span className="font-semibold text-green-800">📋 {t.otherFees}</span>
+                          <span className="font-bold text-lg text-green-900">{formatCurrency(results.localExpenses)}</span>
+                        </div>
+                        <div className="space-y-1 text-xs text-green-600">
+                          <div className="flex justify-between"><span>• {t.inspection}</span><span>{formatCurrency(results.inspectionFee)}</span></div>
+                          <div className="flex justify-between"><span>• {t.documentation}</span><span>{formatCurrency(results.docFee)}</span></div>
+                          <div className="flex justify-between"><span>• {t.portBroker}</span><span>{formatCurrency(results.portFee)}</span></div>
+                        </div>
+                      </div>
+
+                      {/* CIF for Customs */}
+                      <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <span className="font-semibold text-blue-800">🏦 {t.customsCIF}</span>
+                            <p className="text-xs text-blue-600 mt-1">@ {t.atOfficialRate}: {formatNumber(results.officialRate)} DZD/{currency}</p>
+                          </div>
+                          <span className="font-bold text-lg text-blue-900">{formatCurrency(results.cifCustoms)}</span>
+                        </div>
+                        <p className="text-xs text-blue-500 mt-2">({formatCurrency(results.price, currency)} + {formatCurrency(results.freight, currency)}) × {formatNumber(results.officialRate)}</p>
+                        <p className="text-xs text-blue-400 mt-1 italic">{t.forTaxCalc}</p>
+                      </div>
+
+                      {/* Customs Taxes */}
+                      <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <span className="font-semibold text-blue-800">💰 {t.customsRights}</span>
+                            <p className="text-xs text-blue-600 mt-1">{t.onCIF}: {formatCurrency(results.cifCustoms)}</p>
+                          </div>
+                          <span className="font-bold text-lg text-blue-900">{formatCurrency(results.totalTax)}</span>
+                        </div>
+                        
+                        {results.taxes.breakdown ? (
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between items-center p-2 bg-white rounded-lg">
+                              <span className="text-gray-600">{t.dd} ({results.taxes.ddRate}%)</span>
+                              <span className="font-semibold text-gray-800">{formatCurrency(results.taxes.dd)}</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2 bg-white rounded-lg">
+                              <span className="text-gray-600">{t.tcs} ({results.taxes.tcsRate}%)</span>
+                              <span className="font-semibold text-gray-800">{formatCurrency(results.taxes.tcs)}</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2 bg-white rounded-lg">
+                              <span className="text-gray-600">{t.tva} ({results.taxes.tvaRate}%)</span>
+                              <span className="font-semibold text-gray-800">{formatCurrency(results.taxes.tva)}</span>
+                            </div>
+                            <p className="text-xs text-blue-500 mt-2 italic">
+                              TVA = (CIF + DD + TCS) × 19%
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between items-center p-2 bg-white rounded-lg">
+                              <span className="text-gray-600">{t.baseRate}</span>
+                              <span className="font-semibold text-gray-800">{results.taxes.baseRate}%</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2 bg-white rounded-lg">
+                              <span className="text-gray-600">{t.discount}</span>
+                              <span className="font-semibold text-green-600">-{results.taxes.discount}%</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2 bg-[#006233]/10 rounded-lg border border-[#006233]/20">
+                              <span className="text-[#006233] font-medium">{t.finalRate}</span>
+                              <span className="font-bold text-[#006233]">{results.taxes.finalRate}%</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* New Car Tax */}
+                      <div className={`p-4 rounded-xl ${vehicleAge === 'new' ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
+                        <div className="flex items-start justify-between">
+                          <span className={`font-semibold ${vehicleAge === 'new' ? 'text-red-800' : 'text-green-800'}`}>
+                            {vehicleAge === 'new' ? '📝' : '✅'} {t.newCarTax}
+                          </span>
+                          {vehicleAge === 'new' ? (
+                            <span className="font-bold text-lg text-red-900">{formatCurrency(150000)}</span>
+                          ) : (
+                            <span className="font-semibold text-green-700">{t.notApplicable}</span>
+                          )}
+                        </div>
+                        {vehicleAge === 'used' && (
+                          <p className="text-xs text-green-600 mt-2">💚 {t.saved}: {formatCurrency(150000)}</p>
+                        )}
+                      </div>
+
+                      {/* Total */}
+                      <div className="result-card">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xl">💰 {t.totalCost}</span>
+                          <span className="font-black text-3xl">{formatCurrency(results.total)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Legal References */}
+                    <div className="px-6 pb-6">
+                      <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
+                        <h3 className="text-sm font-semibold text-gray-600 mb-2">{t.legalRef}</h3>
+                        <ul className="text-xs text-gray-500 space-y-1">
+                          <li>• {t.decree}</li>
+                          <li>• {t.article}</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="card p-12 text-center">
+                    <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+                      <span className="text-4xl">🚗</span>
+                    </div>
+                    <p className="text-gray-500 text-lg">{t.enterPrice}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <footer className="mt-12 py-6 border-t border-gray-200">
+            <div className="max-w-6xl mx-auto px-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="text-2xl">🇩🇿</span>
+                <span className="font-bold text-[#006233]">Dzair Sourcing Cars</span>
+              </div>
+              <p className="text-gray-500 text-sm">
+                © 2025 - {lang === 'ar' ? 'جميع الحقوق محفوظة' : lang === 'tz' ? 'Izerfan akk ttwahfaḍen' : 'Tous droits réservés'}
+              </p>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('app'));
+    root.render(<DzairCalculator />);
+  </script>
+</body>
+</html>
