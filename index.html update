@@ -1,0 +1,1137 @@
+Here’s your one-file website, no React, with:
+	•	NEW + USED cars
+	•	Engine type selector for both
+	•	For used: combined rates with discount (11.42 / 19.62 / 121.06).
+	•	For new: DD varies by motor type, TCS = 3%, TVA = 19% (split and displayed).
+	•	New-car vignette: 150 000 DZD.
+	•	Legal refs including https://www.douane.gov.dz at the bottom.
+
+You can save this as index.html and host it directly.
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dzair Sourcing Cars - Calculateur d'Importation</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dzGreen: {
+              50: '#e8f5ec',
+              100: '#cfe8d9',
+              500: '#006233',
+              600: '#005229',
+              700: '#004220'
+            },
+            dzRed: {
+              500: '#D21034'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .rtl {
+      direction: rtl;
+      text-align: right;
+      font-family: 'Cairo', sans-serif;
+    }
+    .ltr {
+      direction: ltr;
+      text-align: left;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      padding: 1.5rem;
+    }
+    .input-field {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      transition: all 0.15s ease;
+      font-size: 14px;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #006233;
+      background: #ffffff;
+      box-shadow: 0 0 0 2px rgba(0, 98, 51, 0.15);
+    }
+    .result-card {
+      background: #006233;
+      color: white;
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .tag-yellow {
+      background: #fef3c7;
+      color: #92400e;
+      border-radius: 999px;
+      font-size: 11px;
+      padding: 2px 8px;
+    }
+    .tag-blue {
+      background: #e0edff;
+      color: #1d4ed8;
+      border-radius: 999px;
+      font-size: 11px;
+      padding: 2px 8px;
+    }
+    .tag-green {
+      background: #dcfce7;
+      color: #166534;
+      border-radius: 999px;
+      font-size: 11px;
+      padding: 2px 8px;
+    }
+    .badge-best {
+      background: #dcfce7;
+      color: #166534;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      margin-left: 6px;
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.25s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen">
+  <div id="app"></div>
+
+  <script>
+    // ================== TRANSLATIONS ==================
+    const translations = {
+      ar: {
+        title: 'Dzair Sourcing Cars',
+        subtitle: 'حاسبة تكلفة استيراد السيارات في الجزائر',
+        currency: 'العملة',
+        usd: 'دولار أمريكي',
+        eur: 'يورو',
+        vehicleInfo: 'معلومات السيارة',
+        carPrice: 'سعر السيارة (FOB)',
+        vehicleAge: 'حالة السيارة',
+        brandNew: 'جديدة (0 كم)',
+        usedUnder3: 'مستعملة (أقل من 3 سنوات)',
+        engineType: 'نوع المحرك',
+        electric: 'كهربائي',
+        gasolineSmall: 'بنزين ≤1800 سم³',
+        gasolineLarge: 'بنزين >1800 سم³',
+        hybridSmall: 'هجين ≤1800 سم³',
+        hybridLarge: 'هجين >1800 سم³',
+        foreignCosts: 'التكاليف بالعملة الأجنبية',
+        freightInsurance: 'الشحن + التأمين',
+        localCosts: 'التكاليف المحلية (DZD)',
+        inspection: 'رسوم الفحص',
+        documentation: 'رسوم الوثائق',
+        portBroker: 'حقوق الميناء والمخلص',
+        exchangeRates: 'أسعار الصرف',
+        officialRate: 'السعر الرسمي',
+        blackMarketRate: 'السعر الموازي',
+        lastUpdate: 'آخر تحديث',
+        results: 'تفاصيل التكلفة',
+        fobPrice: 'سعر الشراء (FOB)',
+        atBlackRate: 'بسعر السوق الموازي',
+        freightCost: 'الشحن + التأمين',
+        otherFees: 'رسوم أخرى',
+        customsCIF: 'قيمة CIF الجمركية',
+        atOfficialRate: 'بالسعر الرسمي',
+        forTaxCalc: '(تُستخدم لحساب الرسوم الجمركية)',
+        customsRights: 'الرسوم الجمركية',
+        customsTaxes: 'الرسوم الجمركية',
+        onCIF: 'على قيمة CIF',
+        combinedRate: 'معدل مجمّع',
+        discount: 'تخفيض',
+        baseRate: 'المعدل الأساسي',
+        finalRate: 'المعدل بعد التخفيض',
+        dd: 'حقوق الجمركة (DD)',
+        tcs: 'رسم التضامن (TCS)',
+        tva: 'الرسم على القيمة المضافة (TVA)',
+        newCarTax: 'قسيمة السيارات الجديدة',
+        notApplicable: 'غير مطبَّقة',
+        saved: 'توفير',
+        totalCustoms: 'إجمالي الرسوم الجمركية',
+        totalCost: 'التكلفة الإجمالية',
+        twoRateExplain: 'نظام السعرين',
+        blackMarketInfo: 'يُستخدم لحساب تكلفة الشراء والشحن الفعلية',
+        officialInfo: 'يُستخدم من طرف الجمارك لحساب الرسوم',
+        enterPrice: 'أدخل سعر السيارة لرؤية الحساب',
+        legalRef: 'المراجع القانونية',
+        decree: 'المرسوم 23-74 (20 فبراير 2023)',
+        article: 'المادة 110 من قانون المالية 2020',
+        cifFormula: 'CIF = سعر السيارة + الشحن + التأمين',
+        douaneSite: 'الموقع الرسمي للجمارك الجزائرية',
+        // Savings
+        savingsBannerPrefix: 'يمكنك توفير ما لا يقل عن',
+        savingsBannerSuffix: 'عند اختيار سيارة مستعملة بدلًا من الجديدة.',
+        savingsBannerInfo: 'معظم الزبائن يختارون السيارات المستعملة لتفادي 150 000 دج الخاصة بالسيارات الجديدة والاستفادة من رسوم جمركية أقل.',
+        newCarPromoPrefix: 'يمكنك توفير تقريبًا',
+        newCarPromoSuffix: 'إذا اخترت سيارة مستعملة بدلًا من الجديدة.',
+        footerRights: 'جميع الحقوق محفوظة'
+      },
+      fr: {
+        title: 'Dzair Sourcing Cars',
+        subtitle: "Calculateur de Coût d'Importation de Véhicules en Algérie",
+        currency: 'Devise',
+        usd: 'Dollar US',
+        eur: 'Euro',
+        vehicleInfo: 'Informations du Véhicule',
+        carPrice: 'Prix du véhicule (FOB)',
+        vehicleAge: 'État du véhicule',
+        brandNew: 'Neuf (0 km)',
+        usedUnder3: 'Occasion (moins de 3 ans)',
+        engineType: 'Type de moteur',
+        electric: 'Électrique',
+        gasolineSmall: 'Essence ≤1800 cm³',
+        gasolineLarge: 'Essence >1800 cm³',
+        hybridSmall: 'Hybride ≤1800 cm³',
+        hybridLarge: 'Hybride >1800 cm³',
+        foreignCosts: 'Coûts en Devise Étrangère',
+        freightInsurance: 'Fret + Assurance',
+        localCosts: 'Coûts Locaux (DZD)',
+        inspection: "Frais d'inspection",
+        documentation: 'Frais de documentation',
+        portBroker: 'Droits de port + Transitaire',
+        exchangeRates: 'Taux de Change',
+        officialRate: 'Taux Officiel',
+        blackMarketRate: 'Taux Parallèle',
+        lastUpdate: 'Dernière mise à jour',
+        results: 'Détail des Coûts',
+        fobPrice: "Prix d'achat (FOB)",
+        atBlackRate: 'au taux parallèle',
+        freightCost: 'Fret + Assurance',
+        otherFees: 'Autres frais',
+        customsCIF: 'Valeur CIF Douanière',
+        atOfficialRate: 'au taux officiel',
+        forTaxCalc: '(utilisé pour le calcul des droits de douane)',
+        customsRights: 'Droits & Taxes Douanières',
+        customsTaxes: 'Taxes Douanières',
+        onCIF: 'sur CIF',
+        combinedRate: 'Taux combiné',
+        discount: 'Réduction',
+        baseRate: 'Taux de base',
+        finalRate: 'Taux final',
+        dd: 'Droits de Douane (DD)',
+        tcs: 'Taxe de Solidarité (TCS)',
+        tva: 'TVA',
+        newCarTax: 'Vignette Véhicule Neuf',
+        notApplicable: 'Non applicable',
+        saved: 'Économisé',
+        totalCustoms: 'Total Droits & Taxes',
+        totalCost: 'Coût Total',
+        twoRateExplain: 'Système à Deux Taux',
+        blackMarketInfo: "Utilisé pour les coûts réels d'achat et d'expédition",
+        officialInfo: 'Utilisé par les douanes pour calculer les droits',
+        enterPrice: "Entrez le prix du véhicule pour voir le calcul",
+        legalRef: 'Références Légales',
+        decree: 'Décret 23-74 (20 février 2023)',
+        article: 'Article 110 de la Loi de Finances 2020',
+        cifFormula: 'CIF = Prix véhicule + Fret + Assurance',
+        douaneSite: 'Site officiel de la Douane Algérienne',
+        // Savings
+        savingsBannerPrefix: 'Économisez au moins',
+        savingsBannerSuffix: "en choisissant un véhicule d'occasion.",
+        savingsBannerInfo: 'La majorité des clients choisissent une voiture d’occasion pour éviter la vignette de 150 000 DZD et bénéficier de taux de douane plus faibles.',
+        newCarPromoPrefix: 'Vous pouvez économiser environ',
+        newCarPromoSuffix: "en choisissant un véhicule d’occasion plutôt qu’un véhicule neuf.",
+        footerRights: 'Tous droits réservés'
+      },
+      tz: {
+        title: 'Dzair Sourcing Cars',
+        subtitle: 'Amessiḍen n wezwi n tkerrust di Lezzayer',
+        currency: 'Tadrimt',
+        usd: 'Adular US',
+        eur: 'Uru',
+        vehicleInfo: 'Talɣut ɣef tkerrust',
+        carPrice: 'Azal n tkerrust (FOB)',
+        vehicleAge: 'Addad n tkerrust',
+        brandNew: 'Tamaynut (0 km)',
+        usedUnder3: 'Tusniwin (ddaw 3 n iseggasen)',
+        engineType: 'Anaw n umsedday',
+        electric: 'Elektrik',
+        gasolineSmall: 'Lisans ≤1800 cm³',
+        gasolineLarge: 'Lisans >1800 cm³',
+        hybridSmall: 'Ahybrid ≤1800 cm³',
+        hybridLarge: 'Ahybrid >1800 cm³',
+        foreignCosts: 'Idrimen s tedrimt tabeṛṛanit',
+        freightInsurance: 'Asiweḍ + tasertit',
+        localCosts: 'Idrimen idigan (DZD)',
+        inspection: 'Idrimen n usenqed',
+        documentation: 'Idrimen n isemliyen',
+        portBroker: 'Izerfan n umaẓ + amεessas',
+        exchangeRates: 'Azalen n usnifel',
+        officialRate: 'Azal unṣib',
+        blackMarketRate: 'Azal azeggan',
+        lastUpdate: 'Aleqqem aneggaru',
+        results: 'Talɣut n wezwi',
+        fobPrice: 'Azal n usɣ (FOB)',
+        atBlackRate: 's uzal azeggan',
+        freightCost: 'Asiweḍ + tasertit',
+        otherFees: 'Idrimen nniḍen',
+        customsCIF: 'Azal CIF n lmerk',
+        atOfficialRate: 's uzal unṣib',
+        forTaxCalc: '(yettuseqdac i ussiḍen n izerfan)',
+        customsRights: 'Izerfan n lmerk',
+        customsTaxes: 'Tiwsitin n lmerk',
+        onCIF: 'ɣef CIF',
+        combinedRate: 'Azal amseddu',
+        discount: 'Asenqes',
+        baseRate: 'Azal ameslaw',
+        finalRate: 'Azal aneggaru',
+        dd: 'Izerfan n lmerk (DD)',
+        tcs: 'Tawsit n tiddukla (TCS)',
+        tva: 'TVA',
+        newCarTax: 'Taneɣruft n tkerrust tamaynut',
+        notApplicable: 'Ur tettwasnas ara',
+        saved: 'Yettwaseḥres',
+        totalCustoms: 'Amḍan n izerfan',
+        totalCost: 'Amḍan umulli',
+        twoRateExplain: 'Anagraw n sin yizulay',
+        blackMarketInfo: 'Yettuseqdac i wezwi n usɣ d usiweḍ',
+        officialInfo: 'Yettuseqdac sɣur lmerk i ussiḍen n izerfan',
+        enterPrice: 'Sekcem azal n tkerrust',
+        legalRef: 'Tiselkimin tizerfiyin',
+        decree: 'Amgired 23-74 (20 fuṛar 2023)',
+        article: 'Amagrad 110 n usaḍuf n tedrimt 2020',
+        cifFormula: 'CIF = azal + asiweḍ + tasertit',
+        douaneSite: 'Asmel unṣib n lmerk Lezzayer',
+        // Savings
+        savingsBannerPrefix: 'Tzemreḍ ad tesɛuḍ ma drus',
+        savingsBannerSuffix: 'ma tferneḍ tkerrust tusniwin deg umkan n tamaynut.',
+        savingsBannerInfo: 'Ugar n yimessaɣen frekneḍ tusniwin akken ad rwen 150 000 DZD n tkerrust tamaynut yerna ad senḥun azrefen n lmerk.',
+        newCarPromoPrefix: 'Tzemreḍ ad tesɛuḍ approx.',
+        newCarPromoSuffix: 'ma tferneḍ tusniwin deg umkan n tkerrust tamaynut.',
+        footerRights: 'Izerfan akk ttwahfaḍen'
+      }
+    };
+
+    // Used cars: combined rates with discount
+    const usedCarTaxRates = {
+      electric: { baseRate: 57.08, discount: 80, finalRate: 11.42 },
+      gasolineSmall: { baseRate: 39.23, discount: 50, finalRate: 19.62 },
+      gasolineLarge: { baseRate: 151.33, discount: 20, finalRate: 121.06 },
+      hybridSmall: { baseRate: 39.23, discount: 50, finalRate: 19.62 },
+      hybridLarge: { baseRate: 151.33, discount: 20, finalRate: 121.06 }
+    };
+
+    // New cars: DD varies by engine type, TCS 3%, TVA 19%
+    const newCarDdRates = {
+      electric: 30,        // EV
+      gasolineSmall: 15,   // Essence ≤1800
+      gasolineLarge: 30,   // Essence >1800
+      hybridSmall: 15,     // Hybrid ≤1800
+      hybridLarge: 30      // Hybrid >1800
+    };
+
+    const TAX_TCS = 3;
+    const TAX_TVA = 19;
+    const NEW_CAR_VIGNETTE = 150000;
+
+    const defaultRates = {
+      officialUSD: 135.5,
+      officialEUR: 145.3,
+      blackUSD: 232,
+      blackEUR: 250
+    };
+
+    const formatNumber = (num) =>
+      new Intl.NumberFormat('fr-DZ').format(Math.round(num || 0));
+
+    const formatCurrency = (num, curr = 'DZD') => {
+      if (curr === 'DZD') return `${formatNumber(num)} DZD`;
+      const symbol = curr === 'USD' ? '$' : '€';
+      return `${symbol}${formatNumber(num)}`;
+    };
+
+    const state = {
+      lang: 'fr',
+      currency: 'USD',
+      vehicleAge: 'used',
+      engineType: 'gasolineSmall',
+      carPrice: '',
+      freightInsurance: '',
+      inspection: '15000',
+      documentation: '10000',
+      portBroker: '150000',
+      officialUSD: defaultRates.officialUSD,
+      officialEUR: defaultRates.officialEUR,
+      blackUSD: defaultRates.blackUSD,
+      blackEUR: defaultRates.blackEUR,
+      lastUpdate: new Date().toLocaleString(),
+      results: null,
+      showResults: false,
+      potentialUsedSavings: 0
+    };
+
+    function calculate() {
+      const price = parseFloat(state.carPrice) || 0;
+      const freight = parseFloat(state.freightInsurance) || 0;
+      const inspectionFee = parseFloat(state.inspection) || 0;
+      const docFee = parseFloat(state.documentation) || 0;
+      const portFee = parseFloat(state.portBroker) || 0;
+
+      const blackRate = state.currency === 'USD' ? state.blackUSD : state.blackEUR;
+      const officialRate = state.currency === 'USD' ? state.officialUSD : state.officialEUR;
+
+      const fobDZD = price * blackRate;
+      const freightDZD = freight * blackRate;
+      const localExpenses = inspectionFee + docFee + portFee;
+
+      const cifCustoms = (price + freight) * officialRate;
+
+      let taxes = {};
+      let totalTax = 0;
+      let newCarTaxAmount = 0;
+      let usedCarTaxPreview = 0;
+      let potentialUsedSavings = 0;
+
+      if (!price) {
+        state.results = null;
+        state.showResults = false;
+        render();
+        return;
+      }
+
+      if (state.vehicleAge === 'new') {
+        // NEW CAR – detailed DD/TCS/TVA based on engine
+        const ddRate = newCarDdRates[state.engineType] || 0;
+        const dd = cifCustoms * (ddRate / 100);
+        const tcs = cifCustoms * (TAX_TCS / 100);
+        const tva = (cifCustoms + dd + tcs) * (TAX_TVA / 100);
+
+        newCarTaxAmount = NEW_CAR_VIGNETTE;
+        totalTax = dd + tcs + tva;
+
+        taxes = {
+          dd,
+          tcs,
+          tva,
+          ddRate,
+          tcsRate: TAX_TCS,
+          tvaRate: TAX_TVA,
+          breakdown: true
+        };
+
+        // Preview: what if same car was used (<3 years)
+        const usedInfo = usedCarTaxRates[state.engineType];
+        if (usedInfo) {
+          usedCarTaxPreview = cifCustoms * (usedInfo.finalRate / 100);
+          potentialUsedSavings = totalTax + newCarTaxAmount - usedCarTaxPreview;
+        }
+      } else {
+        // USED CAR – apply combined rate after discount
+        const rateInfo = usedCarTaxRates[state.engineType];
+        if (rateInfo) {
+          totalTax = cifCustoms * (rateInfo.finalRate / 100);
+          taxes = {
+            baseRate: rateInfo.baseRate,
+            discount: rateInfo.discount,
+            finalRate: rateInfo.finalRate,
+            breakdown: false
+          };
+        }
+        newCarTaxAmount = 0;
+        potentialUsedSavings = 0;
+      }
+
+      const total = fobDZD + freightDZD + localExpenses + totalTax + newCarTaxAmount;
+
+      state.results = {
+        price,
+        freight,
+        fobDZD,
+        freightDZD,
+        inspectionFee,
+        docFee,
+        portFee,
+        localExpenses,
+        cifCustoms,
+        taxes,
+        totalTax,
+        newCarTaxAmount,
+        total,
+        blackRate,
+        officialRate,
+        usedCarTaxPreview
+      };
+      state.showResults = true;
+      state.potentialUsedSavings = potentialUsedSavings > 0 ? potentialUsedSavings : 0;
+
+      render();
+    }
+
+    function setState(partial) {
+      Object.assign(state, partial);
+      calculate();
+    }
+
+    function render() {
+      const t = translations[state.lang];
+      const isRTL = state.lang === 'ar';
+
+      const results = state.results;
+
+      const containerClass = isRTL ? 'rtl' : 'ltr';
+
+      const engineButtons = [
+        { value: 'electric', label: t.electric, icon: '⚡', rateUsed: '11.42%' },
+        { value: 'gasolineSmall', label: t.gasolineSmall, icon: '⛽', rateUsed: '19.62%' },
+        { value: 'gasolineLarge', label: t.gasolineLarge, icon: '⛽', rateUsed: '121.06%' },
+        { value: 'hybridSmall', label: t.hybridSmall, icon: '🔋', rateUsed: '19.62%' },
+        { value: 'hybridLarge', label: t.hybridLarge, icon: '🔋', rateUsed: '121.06%' }
+      ];
+
+      const root = document.getElementById('app');
+
+      root.className = containerClass;
+
+      root.innerHTML = `
+        <div class="min-h-screen pb-10 ${containerClass}">
+          <!-- Header -->
+          <header class="bg-dzGreen-700 text-white py-4 px-4">
+            <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                  <span class="text-xl">🚗</span>
+                </div>
+                <div>
+                  <h1 class="text-xl md:text-2xl font-semibold">${t.title}</h1>
+                  <p class="text-xs md:text-sm text-gray-100 opacity-90">${t.subtitle}</p>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                ${[
+                  { code: 'ar', label: 'العربية' },
+                  { code: 'tz', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ' },
+                  { code: 'fr', label: 'Français' }
+                ].map(({ code, label }) => `
+                  <button
+                    data-lang="${code}"
+                    class="px-3 py-1.5 rounded-md text-xs font-medium border ${state.lang === code
+                      ? 'bg-white text-dzGreen-700 border-white'
+                      : 'bg-dzGreen-600 text-white border-dzGreen-500'
+                    }"
+                  >
+                    ${label}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          </header>
+
+          <!-- Savings banner (only when NEW and we have comparison) -->
+          ${state.vehicleAge === 'new' && state.carPrice && state.potentialUsedSavings > 0 ? `
+            <div class="max-w-6xl mx-auto px-4 mt-4">
+              <div class="bg-green-50 border border-green-200 p-3 rounded-lg flex items-start gap-3">
+                <span class="text-2xl mt-0.5">💡</span>
+                <div class="text-sm">
+                  <div class="font-semibold text-green-700">
+                    ${t.savingsBannerPrefix} ${formatCurrency(state.potentialUsedSavings)} ${t.savingsBannerSuffix}
+                  </div>
+                  <div class="text-green-700 mt-1 text-xs md:text-sm">
+                    ${t.savingsBannerInfo}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Two-rate explanation -->
+          <div class="max-w-6xl mx-auto px-4 mt-4">
+            <div class="card">
+              <h3 class="text-sm md:text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <span>ℹ️</span>
+                ${t.twoRateExplain}
+              </h3>
+              <div class="grid md:grid-cols-2 gap-3 text-xs md:text-sm">
+                <div class="flex items-start gap-2">
+                  <div class="w-2 h-2 rounded-full bg-amber-500 mt-1"></div>
+                  <div>
+                    <div class="font-semibold text-amber-800 flex items-center gap-2">
+                      ${t.blackMarketRate}
+                      <span class="tag-yellow">${t.blackMarketRate}</span>
+                    </div>
+                    <p class="text-amber-800 mt-1">
+                      ${t.blackMarketInfo}
+                    </p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-2">
+                  <div class="w-2 h-2 rounded-full bg-blue-500 mt-1"></div>
+                  <div>
+                    <div class="font-semibold text-blue-800 flex items-center gap-2">
+                      ${t.officialRate}
+                      <span class="tag-blue">${t.officialRate}</span>
+                    </div>
+                    <p class="text-blue-800 mt-1">
+                      ${t.officialInfo}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main content -->
+          <div class="max-w-6xl mx-auto px-4 mt-4">
+            <div class="grid lg:grid-cols-2 gap-5 items-start">
+              <!-- Left: Inputs -->
+              <div class="space-y-4">
+                <!-- Vehicle information -->
+                <div class="card">
+                  <h2 class="text-base md:text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <span>🚙</span>
+                    ${t.vehicleInfo}
+                  </h2>
+
+                  <!-- Currency -->
+                  <div class="mb-4">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">
+                      ${t.currency}
+                    </label>
+                    <div class="flex gap-2">
+                      ${['USD', 'EUR'].map(curr => `
+                        <button
+                          data-currency="${curr}"
+                          class="flex-1 py-2 text-xs font-semibold rounded-md border ${state.currency === curr
+                            ? 'bg-dzGreen-600 text-white border-dzGreen-600'
+                            : 'bg-gray-50 text-gray-700 border-gray-300'
+                          }"
+                        >
+                          ${curr === 'USD' ? '$ USD' : '€ EUR'}
+                        </button>
+                      `).join('')}
+                    </div>
+                  </div>
+
+                  <!-- Car price -->
+                  <div class="mb-4">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">
+                      ${t.carPrice}
+                    </label>
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-semibold">
+                        ${state.currency === 'USD' ? '$' : '€'}
+                      </span>
+                      <input
+                        type="number"
+                        id="carPrice"
+                        value="${state.carPrice}"
+                        placeholder="12300"
+                        min="0"
+                        class="input-field pl-8"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Vehicle age -->
+                  <div class="mb-4">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">
+                      ${t.vehicleAge}
+                    </label>
+                    <div class="grid grid-cols-2 gap-2">
+                      ${[
+                        { value: 'new', label: t.brandNew, icon: '✨' },
+                        { value: 'used', label: t.usedUnder3, icon: '🚗' }
+                      ].map(({ value, label, icon }) => `
+                        <button
+                          data-age="${value}"
+                          class="py-2 px-3 rounded-md text-xs font-medium flex items-center justify-center gap-2 border ${state.vehicleAge === value
+                            ? 'bg-dzGreen-600 text-white border-dzGreen-600'
+                            : 'bg-gray-50 text-gray-700 border-gray-300'
+                          }"
+                        >
+                          <span>${icon}</span>
+                          <span class="text-[11px] md:text-xs">${label}</span>
+                          ${value === 'used' ? `<span class="badge-best">Best Value</span>` : ''}
+                        </button>
+                      `).join('')}
+                    </div>
+                  </div>
+
+                  <!-- Engine type -->
+                  <div class="mb-1">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">
+                      ${t.engineType}
+                    </label>
+                    <div class="space-y-1">
+                      ${engineButtons.map(({ value, label, icon, rateUsed }) => `
+                        <button
+                          data-engine="${value}"
+                          class="w-full py-2 px-3 rounded-md text-xs flex items-center justify-between border ${state.engineType === value
+                            ? 'bg-dzGreen-600 text-white border-dzGreen-600'
+                            : 'bg-gray-50 text-gray-700 border-gray-300'
+                          }"
+                        >
+                          <span class="flex items-center gap-2">
+                            <span>${icon}</span>
+                            <span class="text-[11px] md:text-xs">${label}</span>
+                          </span>
+                          <span class="text-[10px] px-2 py-0.5 rounded-full ${state.engineType === value ? 'bg-white/20' : 'bg-gray-200'}">
+                            ${state.vehicleAge === 'used' ? rateUsed : 'DD ' + newCarDdRates[value] + '%'}
+                          </span>
+                        </button>
+                      `).join('')}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Foreign costs -->
+                <div class="card">
+                  <h2 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span>🚢</span>
+                    ${t.foreignCosts}
+                    <span class="tag-yellow ml-2">${t.blackMarketRate}</span>
+                  </h2>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">
+                      ${t.freightInsurance}
+                    </label>
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-semibold">
+                        ${state.currency === 'USD' ? '$' : '€'}
+                      </span>
+                      <input
+                        type="number"
+                        id="freightInsurance"
+                        value="${state.freightInsurance}"
+                        placeholder="1500"
+                        min="0"
+                        class="input-field pl-8"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Local costs -->
+                <div class="card">
+                  <h2 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span>📋</span>
+                    ${t.localCosts}
+                    <span class="tag-green ml-2">DZD</span>
+                  </h2>
+                  <div class="space-y-3">
+                    ${[
+                      { key: 'inspection', value: state.inspection, id: 'inspection', placeholder: '15000' },
+                      { key: 'documentation', value: state.documentation, id: 'documentation', placeholder: '10000' },
+                      { key: 'portBroker', value: state.portBroker, id: 'portBroker', placeholder: '150000' }
+                    ].map(({ key, value, id, placeholder }) => `
+                      <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                          ${t[key]}
+                        </label>
+                        <div class="relative">
+                          <input
+                            type="number"
+                            id="${id}"
+                            value="${value}"
+                            placeholder="${placeholder}"
+                            min="0"
+                            class="input-field pr-10"
+                          />
+                          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                            DZD
+                          </span>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+
+                <!-- Exchange rates -->
+                <div class="card">
+                  <h2 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span>💱</span>
+                    ${t.exchangeRates}
+                  </h2>
+                  <div class="grid grid-cols-2 gap-3 text-xs">
+                    <!-- Parallel -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-md p-3">
+                      <h3 class="font-semibold text-amber-800 mb-2 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                        ${t.blackMarketRate}
+                      </h3>
+                      <div class="space-y-2">
+                        <div>
+                          <label class="block text-[11px] text-amber-800 mb-1">USD/DZD</label>
+                          <input
+                            type="number"
+                            id="blackUSD"
+                            value="${state.blackUSD}"
+                            min="0"
+                            class="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] text-amber-800 mb-1">EUR/DZD</label>
+                          <input
+                            type="number"
+                            id="blackEUR"
+                            value="${state.blackEUR}"
+                            min="0"
+                            class="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Official -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
+                      <h3 class="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                        ${t.officialRate}
+                      </h3>
+                      <div class="space-y-2">
+                        <div>
+                          <label class="block text-[11px] text-blue-800 mb-1">USD/DZD</label>
+                          <input
+                            type="number"
+                            id="officialUSD"
+                            value="${state.officialUSD}"
+                            min="0"
+                            class="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] text-blue-800 mb-1">EUR/DZD</label>
+                          <input
+                            type="number"
+                            id="officialEUR"
+                            value="${state.officialEUR}"
+                            min="0"
+                            class="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
+                          />
+                        </div>
+                      </div>
+                      <p class="text-[11px] text-blue-700 mt-2">
+                        ${t.lastUpdate}: ${state.lastUpdate}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Results -->
+              <div class="lg:sticky lg:top-4 h-fit">
+                ${state.showResults && results ? `
+                  <div class="card animate-fade-in">
+                    <h2 class="text-base md:text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                      <span>📊</span>
+                      ${t.results}
+                    </h2>
+
+                    <div class="space-y-3 text-xs md:text-sm">
+                      <!-- FOB -->
+                      <div class="bg-amber-50 border border-amber-200 rounded-md p-3">
+                        <div class="flex items-start justify-between gap-2">
+                          <div>
+                            <span class="font-semibold text-amber-800">
+                              🚗 ${t.fobPrice}
+                            </span>
+                            <p class="text-[11px] text-amber-700 mt-1">
+                              @ ${t.atBlackRate}: ${formatNumber(results.blackRate)} DZD/${state.currency}
+                            </p>
+                          </div>
+                          <span class="font-semibold text-amber-900">
+                            ${formatCurrency(results.fobDZD)}
+                          </span>
+                        </div>
+                        <p class="text-[11px] text-amber-600 mt-1">
+                          ${formatCurrency(results.price, state.currency)} × ${formatNumber(results.blackRate)}
+                        </p>
+                      </div>
+
+                      <!-- Freight -->
+                      <div class="bg-amber-50 border border-amber-200 rounded-md p-3">
+                        <div class="flex items-start justify-between gap-2">
+                          <div>
+                            <span class="font-semibold text-amber-800">
+                              🚢 ${t.freightCost}
+                            </span>
+                            <p class="text-[11px] text-amber-700 mt-1">
+                              @ ${t.atBlackRate}: ${formatNumber(results.blackRate)} DZD/${state.currency}
+                            </p>
+                          </div>
+                          <span class="font-semibold text-amber-900">
+                            ${formatCurrency(results.freightDZD)}
+                          </span>
+                        </div>
+                        <p class="text-[11px] text-amber-600 mt-1">
+                          ${formatCurrency(results.freight, state.currency)} × ${formatNumber(results.blackRate)}
+                        </p>
+                      </div>
+
+                      <!-- Local expenses -->
+                      <div class="bg-green-50 border border-green-200 rounded-md p-3">
+                        <div class="flex items-start justify-between gap-2 mb-1">
+                          <span class="font-semibold text-green-800">
+                            📋 ${t.otherFees}
+                          </span>
+                          <span class="font-semibold text-green-900">
+                            ${formatCurrency(results.localExpenses)}
+                          </span>
+                        </div>
+                        <div class="space-y-1 text-[11px] text-green-800">
+                          <div class="flex justify-between">
+                            <span>• ${t.inspection}</span>
+                            <span>${formatCurrency(results.inspectionFee)}</span>
+                          </div>
+                          <div class="flex justify-between">
+                            <span>• ${t.documentation}</span>
+                            <span>${formatCurrency(results.docFee)}</span>
+                          </div>
+                          <div class="flex justify-between">
+                            <span>• ${t.portBroker}</span>
+                            <span>${formatCurrency(results.portFee)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- CIF -->
+                      <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
+                        <div class="flex items-start justify-between gap-2">
+                          <div>
+                            <span class="font-semibold text-blue-800">
+                              🏦 ${t.customsCIF}
+                            </span>
+                            <p class="text-[11px] text-blue-700 mt-1">
+                              @ ${t.atOfficialRate}: ${formatNumber(results.officialRate)} DZD/${state.currency}
+                            </p>
+                          </div>
+                          <span class="font-semibold text-blue-900">
+                            ${formatCurrency(results.cifCustoms)}
+                          </span>
+                        </div>
+                        <p class="text-[11px] text-blue-700 mt-1">
+                          (${formatCurrency(results.price, state.currency)} + ${formatCurrency(results.freight, state.currency)}) × ${formatNumber(results.officialRate)}
+                        </p>
+                        <p class="text-[11px] text-blue-500 italic mt-1">
+                          ${t.forTaxCalc}
+                        </p>
+                      </div>
+
+                      <!-- Customs taxes -->
+                      <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
+                        <div class="flex items-start justify-between gap-2 mb-2">
+                          <div>
+                            <span class="font-semibold text-blue-800">
+                              💰 ${t.customsRights}
+                            </span>
+                            <p class="text-[11px] text-blue-700 mt-1">
+                              ${t.onCIF}: ${formatCurrency(results.cifCustoms)}
+                            </p>
+                          </div>
+                          <span class="font-semibold text-blue-900">
+                            ${formatCurrency(results.totalTax)}
+                          </span>
+                        </div>
+                        ${results.taxes.breakdown ? `
+                          <div class="space-y-1 text-[11px] md:text-xs">
+                            <div class="flex justify-between bg-white rounded px-2 py-1">
+                              <span>${t.dd} (${results.taxes.ddRate}%)</span>
+                              <span>${formatCurrency(results.taxes.dd)}</span>
+                            </div>
+                            <div class="flex justify-between bg-white rounded px-2 py-1">
+                              <span>${t.tcs} (${results.taxes.tcsRate}%)</span>
+                              <span>${formatCurrency(results.taxes.tcs)}</span>
+                            </div>
+                            <div class="flex justify-between bg-white rounded px-2 py-1">
+                              <span>${t.tva} (${results.taxes.tvaRate}%)</span>
+                              <span>${formatCurrency(results.taxes.tva)}</span>
+                            </div>
+                            <p class="text-[11px] text-blue-500 mt-1">
+                              TVA = (CIF + DD + TCS) × 19%
+                            </p>
+                          </div>
+                        ` : `
+                          <div class="space-y-1 text-[11px] md:text-xs">
+                            <div class="flex justify-between bg-white rounded px-2 py-1">
+                              <span>${t.baseRate}</span>
+                              <span>${results.taxes.baseRate}%</span>
+                            </div>
+                            <div class="flex justify-between bg-white rounded px-2 py-1">
+                              <span>${t.discount}</span>
+                              <span>-${results.taxes.discount}%</span>
+                            </div>
+                            <div class="flex justify-between bg-green-50 border border-green-200 rounded px-2 py-1">
+                              <span class="text-dzGreen-700 font-medium">${t.finalRate}</span>
+                              <span class="text-dzGreen-700 font-semibold">${results.taxes.finalRate}%</span>
+                            </div>
+                          </div>
+                        `}
+                      </div>
+
+                      <!-- New car vignette -->
+                      <div class="rounded-md p-3 border ${state.vehicleAge === 'new'
+                        ? 'bg-red-50 border-red-200'
+                        : 'bg-green-50 border-green-200'
+                      }">
+                        <div class="flex items-start justify-between gap-2">
+                          <span class="font-semibold text-sm ${state.vehicleAge === 'new' ? 'text-red-800' : 'text-green-800'}">
+                            ${state.vehicleAge === 'new' ? '📝' : '✅'} ${t.newCarTax}
+                          </span>
+                          ${state.vehicleAge === 'new'
+                            ? `<span class="font-semibold text-red-900">${formatCurrency(NEW_CAR_VIGNETTE)}</span>`
+                            : `<span class="font-semibold text-green-700 text-xs">${t.notApplicable}</span>`}
+                        </div>
+                        ${state.vehicleAge === 'used'
+                          ? `<p class="text-[11px] text-green-700 mt-1">
+                               💚 ${t.saved}: ${formatCurrency(NEW_CAR_VIGNETTE)}
+                             </p>`
+                          : ''}
+                        ${state.vehicleAge === 'new' && state.potentialUsedSavings > 0
+                          ? `<p class="text-[11px] text-green-800 mt-2 font-medium">
+                               💡 ${t.newCarPromoPrefix} ${formatCurrency(state.potentialUsedSavings)} ${t.newCarPromoSuffix}
+                             </p>`
+                          : ''}
+                      </div>
+
+                      <!-- Total -->
+                      <div class="result-card">
+                        <div class="flex items-center justify-between gap-3">
+                          <span class="font-semibold text-sm md:text-base">
+                            💰 ${t.totalCost}
+                          </span>
+                          <span class="font-bold text-xl md:text-2xl">
+                            ${formatCurrency(results.total)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- Legal refs -->
+                      <div class="mt-2 bg-gray-50 border border-gray-200 rounded-md p-3 text-[11px] text-gray-700">
+                        <div class="font-semibold mb-1">${t.legalRef}</div>
+                        <ul class="space-y-1">
+                          <li>• ${t.decree}</li>
+                          <li>• ${t.article}</li>
+                          <li>• <a href="https://www.douane.gov.dz" target="_blank" rel="noopener noreferrer" class="underline text-blue-600">https://www.douane.gov.dz</a> – ${t.douaneSite}</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                ` : `
+                  <div class="card text-center">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                      <span class="text-3xl">🚗</span>
+                    </div>
+                    <p class="text-gray-600 text-sm md:text-base">
+                      ${t.enterPrice}
+                    </p>
+                  </div>
+                `}
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <footer class="mt-8 border-t border-gray-200 py-4">
+            <div class="max-w-6xl mx-auto px-4 text-center text-xs text-gray-500">
+              <div class="flex items-center justify-center gap-2 mb-1">
+                <span class="text-xl">🇩🇿</span>
+                <span class="font-semibold text-dzGreen-700">Dzair Sourcing Cars</span>
+              </div>
+              <p>© 2025 - ${t.footerRights}</p>
+            </div>
+          </footer>
+        </div>
+      `;
+
+      attachHandlers();
+    }
+
+    function attachHandlers() {
+      // Language buttons
+      document.querySelectorAll('[data-lang]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const lang = btn.getAttribute('data-lang');
+          state.lang = lang;
+          render(); // rerender with new language, calculation doesn't change
+        });
+      });
+
+      // Currency buttons
+      document.querySelectorAll('[data-currency]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const curr = btn.getAttribute('data-currency');
+          setState({ currency: curr });
+        });
+      });
+
+      // Vehicle age
+      document.querySelectorAll('[data-age]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const age = btn.getAttribute('data-age');
+          setState({ vehicleAge: age });
+        });
+      });
+
+      // Engine type
+      document.querySelectorAll('[data-engine]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const engine = btn.getAttribute('data-engine');
+          setState({ engineType: engine });
+        });
+      });
+
+      // Inputs
+      const bindNumber = (id, key) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', () => {
+          state[key] = el.value;
+          calculate();
+        });
+      };
+
+      bindNumber('carPrice', 'carPrice');
+      bindNumber('freightInsurance', 'freightInsurance');
+      bindNumber('inspection', 'inspection');
+      bindNumber('documentation', 'documentation');
+      bindNumber('portBroker', 'portBroker');
+      bindNumber('blackUSD', 'blackUSD');
+      bindNumber('blackEUR', 'blackEUR');
+      bindNumber('officialUSD', 'officialUSD');
+      bindNumber('officialEUR', 'officialEUR');
+    }
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
