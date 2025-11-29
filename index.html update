@@ -8,7 +8,7 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-  <!-- Tailwind via CDN -->
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -35,8 +35,9 @@
     * { box-sizing: border-box; }
     body {
       font-family: 'Poppins', sans-serif;
-      background: #f3f4f6;
-      color: #111827;
+      background: radial-gradient(circle at top, #020617 0, #020617 35%, #0b1120 55%, #111827 100%);
+      color: #e5e7eb;
+      min-height: 100vh;
     }
     .rtl {
       direction: rtl;
@@ -56,61 +57,73 @@
       -moz-appearance: textfield;
     }
     .card {
-      background: white;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      padding: 1.5rem;
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      padding: 1.2rem 1.4rem;
+      backdrop-filter: blur(10px);
     }
     .input-field {
       width: 100%;
       padding: 10px 14px;
       border-radius: 10px;
-      border: 1px solid #d1d5db;
-      background: #f9fafb;
+      border: 1px solid rgba(148, 163, 184, 0.65);
+      background: rgba(15, 23, 42, 0.9);
       transition: all 0.15s ease;
       font-size: 14px;
+      color: #e5e7eb;
+    }
+    .input-field::placeholder {
+      color: #6b7280;
     }
     .input-field:focus {
       outline: none;
-      border-color: #006233;
-      background: #ffffff;
-      box-shadow: 0 0 0 2px rgba(0, 98, 51, 0.15);
+      border-color: #22c55e;
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.55);
+      background: rgba(15, 23, 42, 0.98);
     }
     .result-card {
-      background: #006233;
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 30%, #15803d 70%, #16a34a 100%);
       color: white;
-      border-radius: 12px;
-      padding: 16px 18px;
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 18px 45px rgba(21, 128, 61, 0.55);
     }
     .tag-yellow {
-      background: #fef3c7;
-      color: #92400e;
+      background: rgba(250, 204, 21, 0.12);
+      color: #facc15;
       border-radius: 999px;
       font-size: 11px;
       padding: 2px 8px;
+      border: 1px solid rgba(250, 204, 21, 0.45);
     }
     .tag-blue {
-      background: #e0edff;
-      color: #1d4ed8;
+      background: rgba(59, 130, 246, 0.12);
+      color: #60a5fa;
       border-radius: 999px;
       font-size: 11px;
       padding: 2px 8px;
+      border: 1px solid rgba(59, 130, 246, 0.45);
     }
     .tag-green {
-      background: #dcfce7;
-      color: #166534;
+      background: rgba(34, 197, 94, 0.12);
+      color: #4ade80;
       border-radius: 999px;
       font-size: 11px;
       padding: 2px 8px;
+      border: 1px solid rgba(34, 197, 94, 0.45);
     }
     .badge-best {
-      background: #dcfce7;
-      color: #166534;
+      background: #22c55e1a;
+      color: #4ade80;
       border-radius: 999px;
       font-size: 0.7rem;
       font-weight: 600;
       padding: 2px 8px;
+      border: 1px solid rgba(34, 197, 94, 0.6);
       margin-left: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
     .animate-fade-in {
       animation: fadeIn 0.25s ease-out;
@@ -122,10 +135,17 @@
   </style>
 </head>
 
-<body class="min-h-screen">
+<body>
   <div id="app"></div>
 
-  <script>
+  <!-- React / ReactDOM / Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+
     // ================== TRANSLATIONS ==================
     const translations = {
       ar: {
@@ -187,7 +207,6 @@
         article: 'المادة 110 من قانون المالية 2020',
         cifFormula: 'CIF = سعر السيارة + الشحن + التأمين',
         douaneSite: 'الموقع الرسمي للجمارك الجزائرية',
-        // Savings
         savingsBannerPrefix: 'يمكنك توفير ما لا يقل عن',
         savingsBannerSuffix: 'عند اختيار سيارة مستعملة بدلًا من الجديدة.',
         savingsBannerInfo: 'معظم الزبائن يختارون السيارات المستعملة لتفادي 150 000 دج الخاصة بالسيارات الجديدة والاستفادة من رسوم جمركية أقل.',
@@ -254,7 +273,6 @@
         article: 'Article 110 de la Loi de Finances 2020',
         cifFormula: 'CIF = Prix véhicule + Fret + Assurance',
         douaneSite: 'Site officiel de la Douane Algérienne',
-        // Savings
         savingsBannerPrefix: 'Économisez au moins',
         savingsBannerSuffix: "en choisissant un véhicule d'occasion.",
         savingsBannerInfo: 'La majorité des clients choisissent une voiture d’occasion pour éviter la vignette de 150 000 DZD et bénéficier de taux de douane plus faibles.',
@@ -321,7 +339,6 @@
         article: 'Amagrad 110 n usaḍuf n tedrimt 2020',
         cifFormula: 'CIF = azal + asiweḍ + tasertit',
         douaneSite: 'Asmel unṣib n lmerk Lezzayer',
-        // Savings
         savingsBannerPrefix: 'Tzemreḍ ad tesɛuḍ ma drus',
         savingsBannerSuffix: 'ma tferneḍ tkerrust tusniwin deg umkan n tamaynut.',
         savingsBannerInfo: 'Ugar n yimessaɣen frekneḍ tusniwin akken ad rwen 150 000 DZD n tkerrust tamaynut yerna ad senḥun azrefen n lmerk.',
@@ -331,7 +348,7 @@
       }
     };
 
-    // Used cars: combined rates with discount
+    // Used cars: combined final rates (after discount)
     const usedCarTaxRates = {
       electric: { baseRate: 57.08, discount: 80, finalRate: 11.42 },
       gasolineSmall: { baseRate: 39.23, discount: 50, finalRate: 19.62 },
@@ -340,7 +357,7 @@
       hybridLarge: { baseRate: 151.33, discount: 20, finalRate: 121.06 }
     };
 
-    // New cars: DD varies by engine type, TCS 3%, TVA 19%
+    // New cars: DD per motor type (full rate), TCS + TVA constant
     const newCarDdRates = {
       electric: 30,        // EV
       gasolineSmall: 15,   // Essence ≤1800
@@ -369,135 +386,138 @@
       return `${symbol}${formatNumber(num)}`;
     };
 
-    const state = {
-      lang: 'fr',
-      currency: 'USD',
-      vehicleAge: 'used',
-      engineType: 'gasolineSmall',
-      carPrice: '',
-      freightInsurance: '',
-      inspection: '15000',
-      documentation: '10000',
-      portBroker: '150000',
-      officialUSD: defaultRates.officialUSD,
-      officialEUR: defaultRates.officialEUR,
-      blackUSD: defaultRates.blackUSD,
-      blackEUR: defaultRates.blackEUR,
-      lastUpdate: new Date().toLocaleString(),
-      results: null,
-      showResults: false,
-      potentialUsedSavings: 0
-    };
+    function DzairCalculator() {
+      const [lang, setLang] = useState('fr');
+      const [currency, setCurrency] = useState('USD');
+      const [vehicleAge, setVehicleAge] = useState('used');
+      const [engineType, setEngineType] = useState('gasolineSmall');
+      const [carPrice, setCarPrice] = useState('');
+      const [freightInsurance, setFreightInsurance] = useState('');
+      const [inspection, setInspection] = useState('15000');
+      const [documentation, setDocumentation] = useState('10000');
+      const [portBroker, setPortBroker] = useState('150000');
+      const [officialUSD, setOfficialUSD] = useState(defaultRates.officialUSD);
+      const [officialEUR, setOfficialEUR] = useState(defaultRates.officialEUR);
+      const [blackUSD, setBlackUSD] = useState(defaultRates.blackUSD);
+      const [blackEUR, setBlackEUR] = useState(defaultRates.blackEUR);
+      const [lastUpdate] = useState(new Date().toLocaleString());
+      const [results, setResults] = useState(null);
+      const [showResults, setShowResults] = useState(false);
+      const [potentialUsedSavings, setPotentialUsedSavings] = useState(0);
 
-    function calculate() {
-      const price = parseFloat(state.carPrice) || 0;
-      const freight = parseFloat(state.freightInsurance) || 0;
-      const inspectionFee = parseFloat(state.inspection) || 0;
-      const docFee = parseFloat(state.documentation) || 0;
-      const portFee = parseFloat(state.portBroker) || 0;
+      const t = translations[lang];
+      const isRTL = lang === 'ar';
 
-      const blackRate = state.currency === 'USD' ? state.blackUSD : state.blackEUR;
-      const officialRate = state.currency === 'USD' ? state.officialUSD : state.officialEUR;
+      const calculate = useCallback(() => {
+        const price = parseFloat(carPrice) || 0;
+        const freight = parseFloat(freightInsurance) || 0;
+        const inspectionFee = parseFloat(inspection) || 0;
+        const docFee = parseFloat(documentation) || 0;
+        const portFee = parseFloat(portBroker) || 0;
 
-      const fobDZD = price * blackRate;
-      const freightDZD = freight * blackRate;
-      const localExpenses = inspectionFee + docFee + portFee;
+        const blackRate = currency === 'USD' ? blackUSD : blackEUR;
+        const officialRate = currency === 'USD' ? officialUSD : officialEUR;
 
-      const cifCustoms = (price + freight) * officialRate;
-
-      let taxes = {};
-      let totalTax = 0;
-      let newCarTaxAmount = 0;
-      let usedCarTaxPreview = 0;
-      let potentialUsedSavings = 0;
-
-      if (!price) {
-        state.results = null;
-        state.showResults = false;
-        render();
-        return;
-      }
-
-      if (state.vehicleAge === 'new') {
-        // NEW CAR – detailed DD/TCS/TVA based on engine
-        const ddRate = newCarDdRates[state.engineType] || 0;
-        const dd = cifCustoms * (ddRate / 100);
-        const tcs = cifCustoms * (TAX_TCS / 100);
-        const tva = (cifCustoms + dd + tcs) * (TAX_TVA / 100);
-
-        newCarTaxAmount = NEW_CAR_VIGNETTE;
-        totalTax = dd + tcs + tva;
-
-        taxes = {
-          dd,
-          tcs,
-          tva,
-          ddRate,
-          tcsRate: TAX_TCS,
-          tvaRate: TAX_TVA,
-          breakdown: true
-        };
-
-        // Preview: what if same car was used (<3 years)
-        const usedInfo = usedCarTaxRates[state.engineType];
-        if (usedInfo) {
-          usedCarTaxPreview = cifCustoms * (usedInfo.finalRate / 100);
-          potentialUsedSavings = totalTax + newCarTaxAmount - usedCarTaxPreview;
+        if (!price) {
+          setShowResults(false);
+          setResults(null);
+          setPotentialUsedSavings(0);
+          return;
         }
-      } else {
-        // USED CAR – apply combined rate after discount
-        const rateInfo = usedCarTaxRates[state.engineType];
-        if (rateInfo) {
-          totalTax = cifCustoms * (rateInfo.finalRate / 100);
+
+        // Parallel market conversions
+        const fobDZD = price * blackRate;
+        const freightDZD = freight * blackRate;
+
+        const localExpenses = inspectionFee + docFee + portFee;
+
+        // CIF at official rate
+        const cifCustoms = (price + freight) * officialRate;
+
+        let taxes = {};
+        let totalTax = 0;
+        let newCarTaxAmount = 0;
+        let usedCarTaxPreview = 0;
+
+        if (vehicleAge === 'new') {
+          const ddRate = newCarDdRates[engineType] || 0;
+          const dd = cifCustoms * (ddRate / 100);
+          const tcs = cifCustoms * (TAX_TCS / 100);
+          const tva = (cifCustoms + dd + tcs) * (TAX_TVA / 100);
+
+          newCarTaxAmount = NEW_CAR_VIGNETTE;
+          totalTax = dd + tcs + tva;
+
           taxes = {
-            baseRate: rateInfo.baseRate,
-            discount: rateInfo.discount,
-            finalRate: rateInfo.finalRate,
-            breakdown: false
+            dd,
+            tcs,
+            tva,
+            ddRate,
+            tcsRate: TAX_TCS,
+            tvaRate: TAX_TVA,
+            breakdown: true
           };
+
+          const usedInfo = usedCarTaxRates[engineType];
+          if (usedInfo) {
+            usedCarTaxPreview = cifCustoms * (usedInfo.finalRate / 100);
+            const potential = totalTax + newCarTaxAmount - usedCarTaxPreview;
+            setPotentialUsedSavings(potential > 0 ? potential : 0);
+          } else {
+            setPotentialUsedSavings(0);
+          }
+
+        } else {
+          const rateInfo = usedCarTaxRates[engineType];
+          if (rateInfo) {
+            totalTax = cifCustoms * (rateInfo.finalRate / 100);
+            taxes = {
+              baseRate: rateInfo.baseRate,
+              discount: rateInfo.discount,
+              finalRate: rateInfo.finalRate,
+              breakdown: false
+            };
+          }
+          newCarTaxAmount = 0;
+          setPotentialUsedSavings(0);
         }
-        newCarTaxAmount = 0;
-        potentialUsedSavings = 0;
-      }
 
-      const total = fobDZD + freightDZD + localExpenses + totalTax + newCarTaxAmount;
+        const total = fobDZD + freightDZD + localExpenses + totalTax + newCarTaxAmount;
 
-      state.results = {
-        price,
-        freight,
-        fobDZD,
-        freightDZD,
-        inspectionFee,
-        docFee,
-        portFee,
-        localExpenses,
-        cifCustoms,
-        taxes,
-        totalTax,
-        newCarTaxAmount,
-        total,
-        blackRate,
-        officialRate,
-        usedCarTaxPreview
-      };
-      state.showResults = true;
-      state.potentialUsedSavings = potentialUsedSavings > 0 ? potentialUsedSavings : 0;
+        setResults({
+          price,
+          freight,
+          fobDZD,
+          freightDZD,
+          inspectionFee,
+          docFee,
+          portFee,
+          localExpenses,
+          cifCustoms,
+          taxes,
+          totalTax,
+          newCarTaxAmount,
+          total,
+          blackRate,
+          officialRate,
+          usedCarTaxPreview
+        });
+        setShowResults(true);
+      }, [
+        carPrice, freightInsurance, inspection, documentation, portBroker,
+        currency, blackUSD, blackEUR, officialUSD, officialEUR, vehicleAge, engineType
+      ]);
 
-      render();
-    }
+      useEffect(() => {
+        if (carPrice) calculate();
+      }, [
+        carPrice, freightInsurance, inspection, documentation, portBroker,
+        currency, blackUSD, blackEUR, officialUSD, officialEUR, vehicleAge, engineType, calculate
+      ]);
 
-    function setState(partial) {
-      Object.assign(state, partial);
-      calculate();
-    }
-
-    function render() {
-      const t = translations[state.lang];
-      const isRTL = state.lang === 'ar';
-
-      const results = state.results;
-
-      const containerClass = isRTL ? 'rtl' : 'ltr';
+      useEffect(() => {
+        document.documentElement.lang = lang;
+      }, [lang]);
 
       const engineButtons = [
         { value: 'electric', label: t.electric, icon: '⚡', rateUsed: '11.42%' },
@@ -507,90 +527,102 @@
         { value: 'hybridLarge', label: t.hybridLarge, icon: '🔋', rateUsed: '121.06%' }
       ];
 
-      const root = document.getElementById('app');
+      const containerClass = isRTL ? 'rtl' : 'ltr';
 
-      root.className = containerClass;
-
-      root.innerHTML = `
-        <div class="min-h-screen pb-10 ${containerClass}">
-          <!-- Header -->
-          <header class="bg-dzGreen-700 text-white py-4 px-4">
-            <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                  <span class="text-xl">🚗</span>
+      return (
+        <div className={`min-h-screen pb-10 ${containerClass}`}>
+          {/* Hero / header */}
+          <header className="border-b border-slate-800/60 bg-gradient-to-r from-slate-950/80 via-slate-900/80 to-slate-950/80 backdrop-blur">
+            <div className="max-w-6xl mx-auto px-4 py-4 md:py-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 md:w-12 md:h-12 bg-gradient-to-br from-emerald-500 to-dzGreen-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/40">
+                  <span className="text-2xl">🚗</span>
                 </div>
                 <div>
-                  <h1 class="text-xl md:text-2xl font-semibold">${t.title}</h1>
-                  <p class="text-xs md:text-sm text-gray-100 opacity-90">${t.subtitle}</p>
+                  <h1 className="text-xl md:text-2xl font-semibold text-slate-50 tracking-tight">
+                    {t.title}
+                  </h1>
+                  <p className="text-xs md:text-sm text-slate-300/80">
+                    {t.subtitle}
+                  </p>
                 </div>
               </div>
-              <div class="flex gap-2">
-                ${[
-                  { code: 'ar', label: 'العربية' },
-                  { code: 'tz', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ' },
-                  { code: 'fr', label: 'Français' }
-                ].map(({ code, label }) => `
-                  <button
-                    data-lang="${code}"
-                    class="px-3 py-1.5 rounded-md text-xs font-medium border ${state.lang === code
-                      ? 'bg-white text-dzGreen-700 border-white'
-                      : 'bg-dzGreen-600 text-white border-dzGreen-500'
-                    }"
-                  >
-                    ${label}
-                  </button>
-                `).join('')}
+              <div className="flex flex-col items-stretch gap-2 md:items-end">
+                <div className="inline-flex items-center gap-2 text-[11px] text-slate-300/80 bg-slate-900/60 px-3 py-1 rounded-full border border-slate-700/80">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Live FX &amp; taxes offline – estimation indicative</span>
+                </div>
+                <div className="flex gap-2 self-end">
+                  {[
+                    { code: 'ar', label: 'العربية' },
+                    { code: 'tz', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ' },
+                    { code: 'fr', label: 'Français' }
+                  ].map(({ code, label }) => (
+                    <button
+                      key={code}
+                      onClick={() => setLang(code)}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium border transition ${
+                        lang === code
+                          ? 'bg-slate-50 text-slate-900 border-slate-50 shadow-sm'
+                          : 'bg-slate-900/60 hover:bg-slate-800 text-slate-100 border-slate-600'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </header>
 
-          <!-- Savings banner (only when NEW and we have comparison) -->
-          ${state.vehicleAge === 'new' && state.carPrice && state.potentialUsedSavings > 0 ? `
-            <div class="max-w-6xl mx-auto px-4 mt-4">
-              <div class="bg-green-50 border border-green-200 p-3 rounded-lg flex items-start gap-3">
-                <span class="text-2xl mt-0.5">💡</span>
-                <div class="text-sm">
-                  <div class="font-semibold text-green-700">
-                    ${t.savingsBannerPrefix} ${formatCurrency(state.potentialUsedSavings)} ${t.savingsBannerSuffix}
+          {/* Savings banner */}
+          {vehicleAge === 'new' && carPrice && potentialUsedSavings > 0 && (
+            <div className="max-w-6xl mx-auto px-4 mt-4">
+              <div className="bg-emerald-950/60 border border-emerald-500/40 rounded-xl p-3.5 flex items-start gap-3 shadow-lg shadow-emerald-900/40">
+                <div className="w-9 h-9 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <span className="text-lg">💡</span>
+                </div>
+                <div className="text-sm text-emerald-50">
+                  <div className="font-semibold">
+                    {t.savingsBannerPrefix} {formatCurrency(potentialUsedSavings)} {t.savingsBannerSuffix}
                   </div>
-                  <div class="text-green-700 mt-1 text-xs md:text-sm">
-                    ${t.savingsBannerInfo}
+                  <div className="mt-1 text-[11px] md:text-xs text-emerald-100/90">
+                    {t.savingsBannerInfo}
                   </div>
                 </div>
               </div>
             </div>
-          ` : ''}
+          )}
 
-          <!-- Two-rate explanation -->
-          <div class="max-w-6xl mx-auto px-4 mt-4">
-            <div class="card">
-              <h3 class="text-sm md:text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <span>ℹ️</span>
-                ${t.twoRateExplain}
+          {/* Two-rate explanation */}
+          <div className="max-w-6xl mx-auto px-4 mt-4">
+            <div className="card">
+              <h3 className="text-sm md:text-base font-semibold text-slate-100 mb-3 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs">ℹ️</span>
+                {t.twoRateExplain}
               </h3>
-              <div class="grid md:grid-cols-2 gap-3 text-xs md:text-sm">
-                <div class="flex items-start gap-2">
-                  <div class="w-2 h-2 rounded-full bg-amber-500 mt-1"></div>
+              <div className="grid md:grid-cols-2 gap-4 text-xs md:text-sm text-slate-200">
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-400 mt-1" />
                   <div>
-                    <div class="font-semibold text-amber-800 flex items-center gap-2">
-                      ${t.blackMarketRate}
-                      <span class="tag-yellow">${t.blackMarketRate}</span>
+                    <div className="font-semibold text-amber-300 flex items-center gap-2">
+                      {t.blackMarketRate}
+                      <span className="tag-yellow">{t.blackMarketRate}</span>
                     </div>
-                    <p class="text-amber-800 mt-1">
-                      ${t.blackMarketInfo}
+                    <p className="text-amber-100/90 mt-1 text-[11px] md:text-xs">
+                      {t.blackMarketInfo}
                     </p>
                   </div>
                 </div>
-                <div class="flex items-start gap-2">
-                  <div class="w-2 h-2 rounded-full bg-blue-500 mt-1"></div>
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 rounded-full bg-sky-400 mt-1" />
                   <div>
-                    <div class="font-semibold text-blue-800 flex items-center gap-2">
-                      ${t.officialRate}
-                      <span class="tag-blue">${t.officialRate}</span>
+                    <div className="font-semibold text-sky-300 flex items-center gap-2">
+                      {t.officialRate}
+                      <span className="tag-blue">{t.officialRate}</span>
                     </div>
-                    <p class="text-blue-800 mt-1">
-                      ${t.officialInfo}
+                    <p className="text-sky-100/90 mt-1 text-[11px] md:text-xs">
+                      {t.officialInfo}
                     </p>
                   </div>
                 </div>
@@ -598,530 +630,515 @@
             </div>
           </div>
 
-          <!-- Main content -->
-          <div class="max-w-6xl mx-auto px-4 mt-4">
-            <div class="grid lg:grid-cols-2 gap-5 items-start">
-              <!-- Left: Inputs -->
-              <div class="space-y-4">
-                <!-- Vehicle information -->
-                <div class="card">
-                  <h2 class="text-base md:text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <span>🚙</span>
-                    ${t.vehicleInfo}
+          {/* Main content */}
+          <div className="max-w-6xl mx-auto px-4 mt-4">
+            <div className="grid lg:grid-cols-[minmax(0,1.15fr),minmax(0,0.95fr)] gap-5 items-start">
+              {/* Left: Inputs */}
+              <div className="space-y-4">
+                {/* Vehicle info */}
+                <div className="card">
+                  <h2 className="text-base md:text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-sm">🚙</span>
+                    {t.vehicleInfo}
                   </h2>
 
-                  <!-- Currency -->
-                  <div class="mb-4">
-                    <label class="block text-xs font-medium text-gray-600 mb-1">
-                      ${t.currency}
+                  {/* Currency */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      {t.currency}
                     </label>
-                    <div class="flex gap-2">
-                      ${['USD', 'EUR'].map(curr => `
+                    <div className="flex gap-2">
+                      {['USD', 'EUR'].map(curr => (
                         <button
-                          data-currency="${curr}"
-                          class="flex-1 py-2 text-xs font-semibold rounded-md border ${state.currency === curr
-                            ? 'bg-dzGreen-600 text-white border-dzGreen-600'
-                            : 'bg-gray-50 text-gray-700 border-gray-300'
-                          }"
+                          key={curr}
+                          onClick={() => setCurrency(curr)}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-md border transition ${
+                            currency === curr
+                              ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/40'
+                              : 'bg-slate-900/70 text-slate-100 border-slate-600 hover:bg-slate-800'
+                          }`}
                         >
-                          ${curr === 'USD' ? '$ USD' : '€ EUR'}
+                          {curr === 'USD' ? '$ USD' : '€ EUR'}
                         </button>
-                      `).join('')}
+                      ))}
                     </div>
                   </div>
 
-                  <!-- Car price -->
-                  <div class="mb-4">
-                    <label class="block text-xs font-medium text-gray-600 mb-1">
-                      ${t.carPrice}
+                  {/* Car price */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      {t.carPrice}
                     </label>
-                    <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-semibold">
-                        ${state.currency === 'USD' ? '$' : '€'}
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-semibold">
+                        {currency === 'USD' ? '$' : '€'}
                       </span>
                       <input
                         type="number"
-                        id="carPrice"
-                        value="${state.carPrice}"
+                        value={carPrice}
+                        onChange={(e) => setCarPrice(e.target.value)}
                         placeholder="12300"
+                        className="input-field pl-8"
                         min="0"
-                        class="input-field pl-8"
                       />
                     </div>
                   </div>
 
-                  <!-- Vehicle age -->
-                  <div class="mb-4">
-                    <label class="block text-xs font-medium text-gray-600 mb-1">
-                      ${t.vehicleAge}
+                  {/* Vehicle age */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      {t.vehicleAge}
                     </label>
-                    <div class="grid grid-cols-2 gap-2">
-                      ${[
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
                         { value: 'new', label: t.brandNew, icon: '✨' },
                         { value: 'used', label: t.usedUnder3, icon: '🚗' }
-                      ].map(({ value, label, icon }) => `
+                      ].map(({ value, label, icon }) => (
                         <button
-                          data-age="${value}"
-                          class="py-2 px-3 rounded-md text-xs font-medium flex items-center justify-center gap-2 border ${state.vehicleAge === value
-                            ? 'bg-dzGreen-600 text-white border-dzGreen-600'
-                            : 'bg-gray-50 text-gray-700 border-gray-300'
-                          }"
+                          key={value}
+                          onClick={() => setVehicleAge(value)}
+                          className={`py-2 px-3 rounded-md text-xs font-medium flex items-center justify-center gap-2 border transition ${
+                            vehicleAge === value
+                              ? 'bg-slate-50 text-slate-900 border-slate-50 shadow-sm shadow-slate-200'
+                              : 'bg-slate-900/70 text-slate-100 border-slate-700 hover:bg-slate-800'
+                          }`}
                         >
-                          <span>${icon}</span>
-                          <span class="text-[11px] md:text-xs">${label}</span>
-                          ${value === 'used' ? `<span class="badge-best">Best Value</span>` : ''}
+                          <span>{icon}</span>
+                          <span className="text-[11px] md:text-xs">{label}</span>
+                          {value === 'used' && (
+                            <span className="badge-best">Best Value</span>
+                          )}
                         </button>
-                      `).join('')}
+                      ))}
                     </div>
                   </div>
 
-                  <!-- Engine type -->
-                  <div class="mb-1">
-                    <label class="block text-xs font-medium text-gray-600 mb-1">
-                      ${t.engineType}
+                  {/* Engine type (for both new & used) */}
+                  <div className="mb-1">
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      {t.engineType}
                     </label>
-                    <div class="space-y-1">
-                      ${engineButtons.map(({ value, label, icon, rateUsed }) => `
+                    <div className="space-y-1">
+                      {engineButtons.map(({ value, label, icon, rateUsed }) => (
                         <button
-                          data-engine="${value}"
-                          class="w-full py-2 px-3 rounded-md text-xs flex items-center justify-between border ${state.engineType === value
-                            ? 'bg-dzGreen-600 text-white border-dzGreen-600'
-                            : 'bg-gray-50 text-gray-700 border-gray-300'
-                          }"
+                          key={value}
+                          onClick={() => setEngineType(value)}
+                          className={`w-full py-2.5 px-3 rounded-md text-xs flex items-center justify-between border transition ${
+                            engineType === value
+                              ? 'bg-slate-100 text-slate-900 border-slate-100 shadow-sm'
+                              : 'bg-slate-900/70 text-slate-100 border-slate-700 hover:bg-slate-800'
+                          }`}
                         >
-                          <span class="flex items-center gap-2">
-                            <span>${icon}</span>
-                            <span class="text-[11px] md:text-xs">${label}</span>
+                          <span className="flex items-center gap-2">
+                            <span>{icon}</span>
+                            <span className="text-[11px] md:text-xs">{label}</span>
                           </span>
-                          <span class="text-[10px] px-2 py-0.5 rounded-full ${state.engineType === value ? 'bg-white/20' : 'bg-gray-200'}">
-                            ${state.vehicleAge === 'used' ? rateUsed : 'DD ' + newCarDdRates[value] + '%'}
+                          <span
+                            className={`text-[10px] px-2 py-0.5 rounded-full ${
+                              engineType === value ? 'bg-emerald-500/10 text-emerald-600' : 'bg-slate-800 text-slate-300'
+                            }`}
+                          >
+                            {vehicleAge === 'used'
+                              ? rateUsed
+                              : `DD ${newCarDdRates[value]}%`}
                           </span>
                         </button>
-                      `).join('')}
+                      ))}
                     </div>
+                    {vehicleAge === 'new' && (
+                      <p className="mt-1.5 text-[10px] text-slate-400">
+                        DD variable selon le moteur. TCS 3% et TVA 19% restent inchangés.
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                <!-- Foreign costs -->
-                <div class="card">
-                  <h2 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                {/* Foreign costs */}
+                <div className="card">
+                  <h2 className="text-base font-semibold text-slate-100 mb-3 flex items-center gap-2">
                     <span>🚢</span>
-                    ${t.foreignCosts}
-                    <span class="tag-yellow ml-2">${t.blackMarketRate}</span>
+                    {t.foreignCosts}
+                    <span className="tag-yellow ml-2">{t.blackMarketRate}</span>
                   </h2>
                   <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">
-                      ${t.freightInsurance}
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      {t.freightInsurance}
                     </label>
-                    <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-semibold">
-                        ${state.currency === 'USD' ? '$' : '€'}
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-semibold">
+                        {currency === 'USD' ? '$' : '€'}
                       </span>
                       <input
                         type="number"
-                        id="freightInsurance"
-                        value="${state.freightInsurance}"
+                        value={freightInsurance}
+                        onChange={(e) => setFreightInsurance(e.target.value)}
                         placeholder="1500"
+                        className="input-field pl-8"
                         min="0"
-                        class="input-field pl-8"
                       />
                     </div>
                   </div>
                 </div>
 
-                <!-- Local costs -->
-                <div class="card">
-                  <h2 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                {/* Local costs */}
+                <div className="card">
+                  <h2 className="text-base font-semibold text-slate-100 mb-3 flex items-center gap-2">
                     <span>📋</span>
-                    ${t.localCosts}
-                    <span class="tag-green ml-2">DZD</span>
+                    {t.localCosts}
+                    <span className="tag-green ml-2">DZD</span>
                   </h2>
-                  <div class="space-y-3">
-                    ${[
-                      { key: 'inspection', value: state.inspection, id: 'inspection', placeholder: '15000' },
-                      { key: 'documentation', value: state.documentation, id: 'documentation', placeholder: '10000' },
-                      { key: 'portBroker', value: state.portBroker, id: 'portBroker', placeholder: '150000' }
-                    ].map(({ key, value, id, placeholder }) => `
-                      <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">
-                          ${t[key]}
+                  <div className="space-y-3">
+                    {[
+                      { key: 'inspection', value: inspection, setter: setInspection, placeholder: '15000' },
+                      { key: 'documentation', value: documentation, setter: setDocumentation, placeholder: '10000' },
+                      { key: 'portBroker', value: portBroker, setter: setPortBroker, placeholder: '150000' }
+                    ].map(({ key, value, setter, placeholder }) => (
+                      <div key={key}>
+                        <label className="block text-xs font-medium text-slate-300 mb-1">
+                          {t[key]}
                         </label>
-                        <div class="relative">
+                        <div className="relative">
                           <input
                             type="number"
-                            id="${id}"
-                            value="${value}"
-                            placeholder="${placeholder}"
+                            value={value}
+                            onChange={(e) => setter(e.target.value)}
+                            placeholder={placeholder}
+                            className="input-field pr-10"
                             min="0"
-                            class="input-field pr-10"
                           />
-                          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">
                             DZD
                           </span>
                         </div>
                       </div>
-                    `).join('')}
+                    ))}
                   </div>
                 </div>
 
-                <!-- Exchange rates -->
-                <div class="card">
-                  <h2 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                {/* Exchange rates */}
+                <div className="card">
+                  <h2 className="text-base font-semibold text-slate-100 mb-3 flex items-center gap-2">
                     <span>💱</span>
-                    ${t.exchangeRates}
+                    {t.exchangeRates}
                   </h2>
-                  <div class="grid grid-cols-2 gap-3 text-xs">
-                    <!-- Parallel -->
-                    <div class="bg-amber-50 border border-amber-200 rounded-md p-3">
-                      <h3 class="font-semibold text-amber-800 mb-2 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                        ${t.blackMarketRate}
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    {/* Parallel */}
+                    <div className="bg-slate-900/80 border border-amber-400/40 rounded-md p-3">
+                      <h3 className="font-semibold text-amber-300 mb-2 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-400" />
+                        {t.blackMarketRate}
                       </h3>
-                      <div class="space-y-2">
+                      <div className="space-y-2">
                         <div>
-                          <label class="block text-[11px] text-amber-800 mb-1">USD/DZD</label>
+                          <label className="block text-[11px] text-amber-200 mb-1">USD/DZD</label>
                           <input
                             type="number"
-                            id="blackUSD"
-                            value="${state.blackUSD}"
+                            value={blackUSD}
                             min="0"
-                            class="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
+                            onChange={(e) => setBlackUSD(parseFloat(e.target.value) || 0)}
+                            className="w-full py-1.5 px-2 rounded border border-amber-400/50 bg-slate-950/70 text-xs text-slate-50"
                           />
                         </div>
                         <div>
-                          <label class="block text-[11px] text-amber-800 mb-1">EUR/DZD</label>
+                          <label className="block text-[11px] text-amber-200 mb-1">EUR/DZD</label>
                           <input
                             type="number"
-                            id="blackEUR"
-                            value="${state.blackEUR}"
+                            value={blackEUR}
                             min="0"
-                            class="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
+                            onChange={(e) => setBlackEUR(parseFloat(e.target.value) || 0)}
+                            className="w-full py-1.5 px-2 rounded border border-amber-400/50 bg-slate-950/70 text-xs text-slate-50"
                           />
                         </div>
                       </div>
                     </div>
 
-                    <!-- Official -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
-                      <h3 class="font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                        ${t.officialRate}
+                    {/* Official */}
+                    <div className="bg-slate-900/80 border border-sky-400/40 rounded-md p-3">
+                      <h3 className="font-semibold text-sky-300 mb-2 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-sky-400" />
+                        {t.officialRate}
                       </h3>
-                      <div class="space-y-2">
+                      <div className="space-y-2">
                         <div>
-                          <label class="block text-[11px] text-blue-800 mb-1">USD/DZD</label>
+                          <label className="block text-[11px] text-sky-200 mb-1">USD/DZD</label>
                           <input
                             type="number"
-                            id="officialUSD"
-                            value="${state.officialUSD}"
+                            value={officialUSD}
                             min="0"
-                            class="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
+                            onChange={(e) => setOfficialUSD(parseFloat(e.target.value) || 0)}
+                            className="w-full py-1.5 px-2 rounded border border-sky-400/50 bg-slate-950/70 text-xs text-slate-50"
                           />
                         </div>
                         <div>
-                          <label class="block text-[11px] text-blue-800 mb-1">EUR/DZD</label>
+                          <label className="block text-[11px] text-sky-200 mb-1">EUR/DZD</label>
                           <input
                             type="number"
-                            id="officialEUR"
-                            value="${state.officialEUR}"
+                            value={officialEUR}
                             min="0"
-                            class="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
+                            onChange={(e) => setOfficialEUR(parseFloat(e.target.value) || 0)}
+                            className="w-full py-1.5 px-2 rounded border border-sky-400/50 bg-slate-950/70 text-xs text-slate-50"
                           />
                         </div>
                       </div>
-                      <p class="text-[11px] text-blue-700 mt-2">
-                        ${t.lastUpdate}: ${state.lastUpdate}
+                      <p className="text-[11px] text-sky-200/80 mt-2">
+                        {t.lastUpdate}: {lastUpdate}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Right: Results -->
-              <div class="lg:sticky lg:top-4 h-fit">
-                ${state.showResults && results ? `
-                  <div class="card animate-fade-in">
-                    <h2 class="text-base md:text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                      <span>📊</span>
-                      ${t.results}
+              {/* Right: Results */}
+              <div className="lg:sticky lg:top-4 h-fit">
+                {showResults && results ? (
+                  <div className="card animate-fade-in">
+                    <h2 className="text-base md:text-lg font-semibold text-slate-100 mb-3 flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-sm">📊</span>
+                      {t.results}
                     </h2>
 
-                    <div class="space-y-3 text-xs md:text-sm">
-                      <!-- FOB -->
-                      <div class="bg-amber-50 border border-amber-200 rounded-md p-3">
-                        <div class="flex items-start justify-between gap-2">
+                    <div className="space-y-3 text-xs md:text-sm text-slate-100">
+                      {/* FOB */}
+                      <div className="bg-slate-900/90 border border-amber-400/40 rounded-md p-3">
+                        <div className="flex items-start justify-between gap-2">
                           <div>
-                            <span class="font-semibold text-amber-800">
-                              🚗 ${t.fobPrice}
+                            <span className="font-semibold text-amber-300">
+                              🚗 {t.fobPrice}
                             </span>
-                            <p class="text-[11px] text-amber-700 mt-1">
-                              @ ${t.atBlackRate}: ${formatNumber(results.blackRate)} DZD/${state.currency}
+                            <p className="text-[11px] text-amber-100/90 mt-1">
+                              @ {t.atBlackRate}: {formatNumber(results.blackRate)} DZD/{currency}
                             </p>
                           </div>
-                          <span class="font-semibold text-amber-900">
-                            ${formatCurrency(results.fobDZD)}
+                          <span className="font-semibold text-amber-100">
+                            {formatCurrency(results.fobDZD)}
                           </span>
                         </div>
-                        <p class="text-[11px] text-amber-600 mt-1">
-                          ${formatCurrency(results.price, state.currency)} × ${formatNumber(results.blackRate)}
+                        <p className="text-[11px] text-amber-100/80 mt-1">
+                          {formatCurrency(results.price, currency)} × {formatNumber(results.blackRate)}
                         </p>
                       </div>
 
-                      <!-- Freight -->
-                      <div class="bg-amber-50 border border-amber-200 rounded-md p-3">
-                        <div class="flex items-start justify-between gap-2">
+                      {/* Freight */}
+                      <div className="bg-slate-900/90 border border-amber-400/40 rounded-md p-3">
+                        <div className="flex items-start justify-between gap-2">
                           <div>
-                            <span class="font-semibold text-amber-800">
-                              🚢 ${t.freightCost}
+                            <span className="font-semibold text-amber-300">
+                              🚢 {t.freightCost}
                             </span>
-                            <p class="text-[11px] text-amber-700 mt-1">
-                              @ ${t.atBlackRate}: ${formatNumber(results.blackRate)} DZD/${state.currency}
+                            <p className="text-[11px] text-amber-100/90 mt-1">
+                              @ {t.atBlackRate}: {formatNumber(results.blackRate)} DZD/{currency}
                             </p>
                           </div>
-                          <span class="font-semibold text-amber-900">
-                            ${formatCurrency(results.freightDZD)}
+                          <span className="font-semibold text-amber-100">
+                            {formatCurrency(results.freightDZD)}
                           </span>
                         </div>
-                        <p class="text-[11px] text-amber-600 mt-1">
-                          ${formatCurrency(results.freight, state.currency)} × ${formatNumber(results.blackRate)}
+                        <p className="text-[11px] text-amber-100/80 mt-1">
+                          {formatCurrency(results.freight, currency)} × {formatNumber(results.blackRate)}
                         </p>
                       </div>
 
-                      <!-- Local expenses -->
-                      <div class="bg-green-50 border border-green-200 rounded-md p-3">
-                        <div class="flex items-start justify-between gap-2 mb-1">
-                          <span class="font-semibold text-green-800">
-                            📋 ${t.otherFees}
+                      {/* Local expenses */}
+                      <div className="bg-slate-900/90 border border-emerald-400/40 rounded-md p-3">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <span className="font-semibold text-emerald-300">
+                            📋 {t.otherFees}
                           </span>
-                          <span class="font-semibold text-green-900">
-                            ${formatCurrency(results.localExpenses)}
+                          <span className="font-semibold text-emerald-100">
+                            {formatCurrency(results.localExpenses)}
                           </span>
                         </div>
-                        <div class="space-y-1 text-[11px] text-green-800">
-                          <div class="flex justify-between">
-                            <span>• ${t.inspection}</span>
-                            <span>${formatCurrency(results.inspectionFee)}</span>
+                        <div className="space-y-1 text-[11px] text-emerald-100/90">
+                          <div className="flex justify-between">
+                            <span>• {t.inspection}</span>
+                            <span>{formatCurrency(results.inspectionFee)}</span>
                           </div>
-                          <div class="flex justify-between">
-                            <span>• ${t.documentation}</span>
-                            <span>${formatCurrency(results.docFee)}</span>
+                          <div className="flex justify-between">
+                            <span>• {t.documentation}</span>
+                            <span>{formatCurrency(results.docFee)}</span>
                           </div>
-                          <div class="flex justify-between">
-                            <span>• ${t.portBroker}</span>
-                            <span>${formatCurrency(results.portFee)}</span>
+                          <div className="flex justify-between">
+                            <span>• {t.portBroker}</span>
+                            <span>{formatCurrency(results.portFee)}</span>
                           </div>
                         </div>
                       </div>
 
-                      <!-- CIF -->
-                      <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
-                        <div class="flex items-start justify-between gap-2">
+                      {/* CIF */}
+                      <div className="bg-slate-900/90 border border-sky-400/40 rounded-md p-3">
+                        <div className="flex items-start justify-between gap-2">
                           <div>
-                            <span class="font-semibold text-blue-800">
-                              🏦 ${t.customsCIF}
+                            <span className="font-semibold text-sky-300">
+                              🏦 {t.customsCIF}
                             </span>
-                            <p class="text-[11px] text-blue-700 mt-1">
-                              @ ${t.atOfficialRate}: ${formatNumber(results.officialRate)} DZD/${state.currency}
+                            <p className="text-[11px] text-sky-100/90 mt-1">
+                              @ {t.atOfficialRate}: {formatNumber(results.officialRate)} DZD/{currency}
                             </p>
                           </div>
-                          <span class="font-semibold text-blue-900">
-                            ${formatCurrency(results.cifCustoms)}
+                          <span className="font-semibold text-sky-50">
+                            {formatCurrency(results.cifCustoms)}
                           </span>
                         </div>
-                        <p class="text-[11px] text-blue-700 mt-1">
-                          (${formatCurrency(results.price, state.currency)} + ${formatCurrency(results.freight, state.currency)}) × ${formatNumber(results.officialRate)}
+                        <p className="text-[11px] text-sky-100/80 mt-1">
+                          ({formatCurrency(results.price, currency)} + {formatCurrency(results.freight, currency)}) × {formatNumber(results.officialRate)}
                         </p>
-                        <p class="text-[11px] text-blue-500 italic mt-1">
-                          ${t.forTaxCalc}
+                        <p className="text-[11px] text-sky-200/80 italic mt-1">
+                          {t.forTaxCalc}
                         </p>
                       </div>
 
-                      <!-- Customs taxes -->
-                      <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
-                        <div class="flex items-start justify-between gap-2 mb-2">
+                      {/* Customs taxes */}
+                      <div className="bg-slate-900/90 border border-sky-400/40 rounded-md p-3">
+                        <div className="flex items-start justify-between gap-2 mb-2">
                           <div>
-                            <span class="font-semibold text-blue-800">
-                              💰 ${t.customsRights}
+                            <span className="font-semibold text-sky-300">
+                              💰 {t.customsRights}
                             </span>
-                            <p class="text-[11px] text-blue-700 mt-1">
-                              ${t.onCIF}: ${formatCurrency(results.cifCustoms)}
+                            <p className="text-[11px] text-sky-100/90 mt-1">
+                              {t.onCIF}: {formatCurrency(results.cifCustoms)}
                             </p>
                           </div>
-                          <span class="font-semibold text-blue-900">
-                            ${formatCurrency(results.totalTax)}
+                          <span className="font-semibold text-sky-50">
+                            {formatCurrency(results.totalTax)}
                           </span>
                         </div>
-                        ${results.taxes.breakdown ? `
-                          <div class="space-y-1 text-[11px] md:text-xs">
-                            <div class="flex justify-between bg-white rounded px-2 py-1">
-                              <span>${t.dd} (${results.taxes.ddRate}%)</span>
-                              <span>${formatCurrency(results.taxes.dd)}</span>
+                        {results.taxes.breakdown ? (
+                          <div className="space-y-1 text-[11px] md:text-xs text-slate-100">
+                            <div className="flex justify-between bg-slate-950/80 rounded px-2 py-1">
+                              <span>{t.dd} ({results.taxes.ddRate}%)</span>
+                              <span>{formatCurrency(results.taxes.dd)}</span>
                             </div>
-                            <div class="flex justify-between bg-white rounded px-2 py-1">
-                              <span>${t.tcs} (${results.taxes.tcsRate}%)</span>
-                              <span>${formatCurrency(results.taxes.tcs)}</span>
+                            <div className="flex justify-between bg-slate-950/80 rounded px-2 py-1">
+                              <span>{t.tcs} ({results.taxes.tcsRate}%)</span>
+                              <span>{formatCurrency(results.taxes.tcs)}</span>
                             </div>
-                            <div class="flex justify-between bg-white rounded px-2 py-1">
-                              <span>${t.tva} (${results.taxes.tvaRate}%)</span>
-                              <span>${formatCurrency(results.taxes.tva)}</span>
+                            <div className="flex justify-between bg-slate-950/80 rounded px-2 py-1">
+                              <span>{t.tva} ({results.taxes.tvaRate}%)</span>
+                              <span>{formatCurrency(results.taxes.tva)}</span>
                             </div>
-                            <p class="text-[11px] text-blue-500 mt-1">
+                            <p className="text-[11px] text-sky-200/80 mt-1">
                               TVA = (CIF + DD + TCS) × 19%
                             </p>
                           </div>
-                        ` : `
-                          <div class="space-y-1 text-[11px] md:text-xs">
-                            <div class="flex justify-between bg-white rounded px-2 py-1">
-                              <span>${t.baseRate}</span>
-                              <span>${results.taxes.baseRate}%</span>
+                        ) : (
+                          <div className="space-y-1 text-[11px] md:text-xs">
+                            <div className="flex justify-between bg-slate-950/80 rounded px-2 py-1">
+                              <span>{t.baseRate}</span>
+                              <span>{results.taxes.baseRate}%</span>
                             </div>
-                            <div class="flex justify-between bg-white rounded px-2 py-1">
-                              <span>${t.discount}</span>
-                              <span>-${results.taxes.discount}%</span>
+                            <div className="flex justify-between bg-slate-950/80 rounded px-2 py-1">
+                              <span>{t.discount}</span>
+                              <span>-{results.taxes.discount}%</span>
                             </div>
-                            <div class="flex justify-between bg-green-50 border border-green-200 rounded px-2 py-1">
-                              <span class="text-dzGreen-700 font-medium">${t.finalRate}</span>
-                              <span class="text-dzGreen-700 font-semibold">${results.taxes.finalRate}%</span>
+                            <div className="flex justify-between bg-emerald-950/80 border border-emerald-500/50 rounded px-2 py-1">
+                              <span className="text-emerald-300 font-medium">{t.finalRate}</span>
+                              <span className="text-emerald-200 font-semibold">{results.taxes.finalRate}%</span>
                             </div>
                           </div>
-                        `}
+                        )}
                       </div>
 
-                      <!-- New car vignette -->
-                      <div class="rounded-md p-3 border ${state.vehicleAge === 'new'
-                        ? 'bg-red-50 border-red-200'
-                        : 'bg-green-50 border-green-200'
-                      }">
-                        <div class="flex items-start justify-between gap-2">
-                          <span class="font-semibold text-sm ${state.vehicleAge === 'new' ? 'text-red-800' : 'text-green-800'}">
-                            ${state.vehicleAge === 'new' ? '📝' : '✅'} ${t.newCarTax}
+                      {/* New car vignette */}
+                      <div className={`rounded-md p-3 border ${
+                        vehicleAge === 'new'
+                          ? 'bg-red-950/80 border-red-500/50'
+                          : 'bg-emerald-950/80 border-emerald-500/50'
+                      }`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <span className={`font-semibold text-sm ${
+                            vehicleAge === 'new' ? 'text-red-200' : 'text-emerald-200'
+                          }`}>
+                            {vehicleAge === 'new' ? '📝' : '✅'} {t.newCarTax}
                           </span>
-                          ${state.vehicleAge === 'new'
-                            ? `<span class="font-semibold text-red-900">${formatCurrency(NEW_CAR_VIGNETTE)}</span>`
-                            : `<span class="font-semibold text-green-700 text-xs">${t.notApplicable}</span>`}
+                          {vehicleAge === 'new' ? (
+                            <span className="font-semibold text-red-100">
+                              {formatCurrency(NEW_CAR_VIGNETTE)}
+                            </span>
+                          ) : (
+                            <span className="font-semibold text-emerald-200 text-xs">
+                              {t.notApplicable}
+                            </span>
+                          )}
                         </div>
-                        ${state.vehicleAge === 'used'
-                          ? `<p class="text-[11px] text-green-700 mt-1">
-                               💚 ${t.saved}: ${formatCurrency(NEW_CAR_VIGNETTE)}
-                             </p>`
-                          : ''}
-                        ${state.vehicleAge === 'new' && state.potentialUsedSavings > 0
-                          ? `<p class="text-[11px] text-green-800 mt-2 font-medium">
-                               💡 ${t.newCarPromoPrefix} ${formatCurrency(state.potentialUsedSavings)} ${t.newCarPromoSuffix}
-                             </p>`
-                          : ''}
+
+                        {vehicleAge === 'used' && (
+                          <p className="text-[11px] text-emerald-100 mt-1">
+                            💚 {t.saved}: {formatCurrency(NEW_CAR_VIGNETTE)}
+                          </p>
+                        )}
+
+                        {vehicleAge === 'new' && potentialUsedSavings > 0 && (
+                          <p className="text-[11px] text-emerald-100 mt-2 font-medium">
+                            💡 {t.newCarPromoPrefix} {formatCurrency(potentialUsedSavings)} {t.newCarPromoSuffix}
+                          </p>
+                        )}
                       </div>
 
-                      <!-- Total -->
-                      <div class="result-card">
-                        <div class="flex items-center justify-between gap-3">
-                          <span class="font-semibold text-sm md:text-base">
-                            💰 ${t.totalCost}
+                      {/* Total */}
+                      <div className="result-card">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-semibold text-sm md:text-base">
+                            💰 {t.totalCost}
                           </span>
-                          <span class="font-bold text-xl md:text-2xl">
-                            ${formatCurrency(results.total)}
+                          <span className="font-bold text-xl md:text-2xl tracking-tight">
+                            {formatCurrency(results.total)}
                           </span>
                         </div>
                       </div>
 
-                      <!-- Legal refs -->
-                      <div class="mt-2 bg-gray-50 border border-gray-200 rounded-md p-3 text-[11px] text-gray-700">
-                        <div class="font-semibold mb-1">${t.legalRef}</div>
-                        <ul class="space-y-1">
-                          <li>• ${t.decree}</li>
-                          <li>• ${t.article}</li>
-                          <li>• <a href="https://www.douane.gov.dz" target="_blank" rel="noopener noreferrer" class="underline text-blue-600">https://www.douane.gov.dz</a> – ${t.douaneSite}</li>
+                      {/* Legal refs */}
+                      <div className="mt-2 bg-slate-900/80 border border-slate-700/80 rounded-md p-3 text-[11px] text-slate-200">
+                        <div className="font-semibold mb-1">{t.legalRef}</div>
+                        <ul className="space-y-1">
+                          <li>• {t.decree}</li>
+                          <li>• {t.article}</li>
+                          <li>
+                            • <a
+                                href="https://www.douane.gov.dz"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline text-sky-300 hover:text-sky-200"
+                              >
+                                https://www.douane.gov.dz
+                              </a> – {t.douaneSite}
+                          </li>
                         </ul>
                       </div>
                     </div>
                   </div>
-                ` : `
-                  <div class="card text-center">
-                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                      <span class="text-3xl">🚗</span>
+                ) : (
+                  <div className="card text-center">
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-slate-900/80 border border-slate-700 flex items-center justify-center shadow-inner">
+                      <span className="text-4xl">🚗</span>
                     </div>
-                    <p class="text-gray-600 text-sm md:text-base">
-                      ${t.enterPrice}
+                    <p className="text-slate-200 text-sm md:text-base">
+                      {t.enterPrice}
+                    </p>
+                    <p className="mt-2 text-[11px] text-slate-400">
+                      {t.cifFormula}
                     </p>
                   </div>
-                `}
+                )}
               </div>
             </div>
           </div>
 
-          <!-- Footer -->
-          <footer class="mt-8 border-t border-gray-200 py-4">
-            <div class="max-w-6xl mx-auto px-4 text-center text-xs text-gray-500">
-              <div class="flex items-center justify-center gap-2 mb-1">
-                <span class="text-xl">🇩🇿</span>
-                <span class="font-semibold text-dzGreen-700">Dzair Sourcing Cars</span>
+          {/* Footer */}
+          <footer className="mt-8 border-t border-slate-800/80 py-4 bg-slate-950/90">
+            <div className="max-w-6xl mx-auto px-4 text-center text-xs text-slate-400">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <span className="text-xl">🇩🇿</span>
+                <span className="font-semibold text-emerald-400">Dzair Sourcing Cars</span>
               </div>
-              <p>© 2025 - ${t.footerRights}</p>
+              <p>© 2025 - {t.footerRights}</p>
             </div>
           </footer>
         </div>
-      `;
-
-      attachHandlers();
+      );
     }
 
-    function attachHandlers() {
-      // Language buttons
-      document.querySelectorAll('[data-lang]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const lang = btn.getAttribute('data-lang');
-          state.lang = lang;
-          render(); // rerender with new language, calculation doesn't change
-        });
-      });
-
-      // Currency buttons
-      document.querySelectorAll('[data-currency]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const curr = btn.getAttribute('data-currency');
-          setState({ currency: curr });
-        });
-      });
-
-      // Vehicle age
-      document.querySelectorAll('[data-age]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const age = btn.getAttribute('data-age');
-          setState({ vehicleAge: age });
-        });
-      });
-
-      // Engine type
-      document.querySelectorAll('[data-engine]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const engine = btn.getAttribute('data-engine');
-          setState({ engineType: engine });
-        });
-      });
-
-      // Inputs
-      const bindNumber = (id, key) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.addEventListener('input', () => {
-          state[key] = el.value;
-          calculate();
-        });
-      };
-
-      bindNumber('carPrice', 'carPrice');
-      bindNumber('freightInsurance', 'freightInsurance');
-      bindNumber('inspection', 'inspection');
-      bindNumber('documentation', 'documentation');
-      bindNumber('portBroker', 'portBroker');
-      bindNumber('blackUSD', 'blackUSD');
-      bindNumber('blackEUR', 'blackEUR');
-      bindNumber('officialUSD', 'officialUSD');
-      bindNumber('officialEUR', 'officialEUR');
-    }
-
-    // Initial render
-    render();
+    const root = ReactDOM.createRoot(document.getElementById('app'));
+    root.render(<DzairCalculator />);
   </script>
 </body>
 </html>
