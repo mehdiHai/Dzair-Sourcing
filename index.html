@@ -138,7 +138,7 @@
   <script type="text/babel">
     const { useState, useEffect, useCallback } = React;
 
-    /* ------------ Icons (inline SVG) ------------ */
+    /* ------------ Icons ------------ */
 
     const IconCar = ({ className = "w-5 h-5" }) => (
       <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -451,7 +451,6 @@
 
     /* ------------ Tax rates ------------ */
 
-    // Used car final rates
     const usedCarTaxRates = {
       electric: { baseRate: 57.08, discount: 80, finalRate: 11.42 },
       gasolineSmall: { baseRate: 39.23, discount: 50, finalRate: 19.62 },
@@ -460,13 +459,12 @@
       hybridLarge: { baseRate: 151.33, discount: 20, finalRate: 121.06 }
     };
 
-    // New car DD rates only (TCS & TVA fixed)
     const newCarDdRates = {
-      electric: 30,        // EV
-      gasolineSmall: 15,   // Essence ≤1800
-      gasolineLarge: 30,   // Essence >1800
-      hybridSmall: 15,     // Hybride ≤1800
-      hybridLarge: 30      // Hybride >1800
+      electric: 30,
+      gasolineSmall: 15,
+      gasolineLarge: 30,
+      hybridSmall: 15,
+      hybridLarge: 30
     };
 
     const TAX_TCS = 3;
@@ -509,10 +507,11 @@
       const [results, setResults] = useState(null);
       const [showResults, setShowResults] = useState(false);
       const [potentialUsedSavings, setPotentialUsedSavings] = useState(0);
-      const [resaleMonths, setResaleMonths] = useState(36); // LF 2025 resale
+      const [resaleMonths, setResaleMonths] = useState(36);
 
       const t = translations[lang];
       const isRTL = lang === 'ar';
+      const containerClass = isRTL ? 'rtl' : 'ltr';
 
       const calculate = useCallback(() => {
         const price = parseFloat(carPrice) || 0;
@@ -638,9 +637,7 @@
         { value: 'hybridLarge', label: translations[lang].hybridLarge, rateUsed: '121.06%' }
       ];
 
-      const containerClass = isRTL ? 'rtl' : 'ltr';
-
-      // --- LF 2025 resale computation (ALWAYS for used cars) ---
+      // --- LF 2025 resale computation (used cars) ---
       const resaleInfo = (() => {
         if (!results || vehicleAge !== 'used') return null;
 
@@ -705,7 +702,7 @@
             </div>
           </header>
 
-          {/* Savings banner for new vs used */}
+          {/* Savings banner new vs used */}
           {vehicleAge === 'new' && carPrice && potentialUsedSavings > 0 && (
             <div className="max-w-6xl mx-auto px-4 mt-4">
               <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg flex items-start gap-3">
@@ -1175,7 +1172,7 @@
                         )}
                       </div>
 
-                      {/* LF 2025: Avantage fiscal & revente – ALWAYS visible for used cars */}
+                      {/* LF 2025: Avantage fiscal + Revente (Option D) */}
                       {vehicleAge === 'used' && resaleInfo && (
                         <div className="bg-violet-50 border border-violet-200 rounded-md p-3">
                           <div className="flex items-start justify-between gap-2 mb-2">
@@ -1187,6 +1184,17 @@
                             </div>
                           </div>
 
+                          {/* Static rules */}
+                          <div className="mb-2 text-[11px] md:text-xs text-violet-800">
+                            <ul className="space-y-1">
+                              <li>• {t.resaleRefundFull}</li>
+                              <li>• {t.resaleRefund66}</li>
+                              <li>• {t.resaleRefund33}</li>
+                              <li>• {t.resaleRefundNone}</li>
+                            </ul>
+                          </div>
+
+                          {/* Advantage amount */}
                           <div className="space-y-1 text-[11px] md:text-xs mb-2">
                             <div className="flex justify-between bg-white rounded px-2 py-1">
                               <span>
@@ -1197,6 +1205,7 @@
                             </div>
                           </div>
 
+                          {/* Calculator: resale months */}
                           <div className="mb-2">
                             <label className="block text-[11px] font-medium text-violet-800 mb-1">
                               {t.resaleMonthsLabel}
@@ -1216,6 +1225,7 @@
                             </div>
                           </div>
 
+                          {/* Refund & kept advantage */}
                           <div className="space-y-1 text-[11px] md:text-xs">
                             <div className="flex justify-between bg-violet-100 rounded px-2 py-1">
                               <span>{t.resaleRefundAmount}</span>
@@ -1235,7 +1245,7 @@
                         </div>
                       )}
 
-                      {/* New car tax */}
+                      {/* New car vignette */}
                       <div className={`rounded-md p-3 border ${
                         vehicleAge === 'new'
                           ? 'bg-red-50 border-red-200'
