@@ -138,7 +138,7 @@
   <script type="text/babel">
     const { useState, useEffect, useCallback } = React;
 
-    /* ------------ Icons (inline SVG, no emojis) ------------ */
+    /* ------------ Icons (inline SVG) ------------ */
 
     const IconCar = ({ className = "w-5 h-5" }) => (
       <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -284,15 +284,15 @@
         newCarPromoPrefix: 'يمكنك توفير تقريبًا',
         newCarPromoSuffix: 'إذا اخترت سيارة مستعملة بدلًا من الجديدة.',
         footerRights: 'جميع الحقوق محفوظة',
-        resaleTitle: 'إعادة البيع واسترجاع الامتياز (قانون المالية 2025)',
+        resaleTitle: 'إعادة البيع وامتياز السيارة المستعملة (قانون المالية 2025)',
         resaleMonthsLabel: 'عدد الأشهر بعد الجمركة (تاريخ إعادة البيع)',
-        resaleAdvantageAmount: 'مبلغ الامتياز الجبائي المحصل',
-        resaleRefundAmount: 'المبلغ الواجب إرجاعه',
+        resaleAdvantageAmount: 'قيمة الامتياز الجبائي على السيارة المستعملة',
+        resaleRefundAmount: 'المبلغ الواجب إرجاعه للدولة',
         resaleRefundNone: 'لا يوجد إرجاع بعد 36 شهراً من الجمركة',
         resaleRefundFull: 'إعادة بيع في ≤ 12 شهراً: إرجاع 100٪ من الامتياز',
         resaleRefund66: 'إعادة بيع بين 12 و24 شهراً: إرجاع 66٪ من الامتياز',
         resaleRefund33: 'إعادة بيع بين 24 و36 شهراً: إرجاع 33٪ من الامتياز',
-        resaleLawNote: 'حسب قانون المالية 2025: بيع سيارة أقل من 3 سنوات قبل 36 شهراً يفرض استرجاع جزء أو كل الامتياز الجبائي.',
+        resaleLawNote: 'حسب قانون المالية 2025: بيع سيارة أقل من 3 سنوات قبل 36 شهراً يفرض استرجاع جزء أو كل الامتياز الجبائي المرتبط بالتخفيض على DD.',
         resaleSavedLabel: 'الامتياز المتبقي بعد الإرجاع'
       },
       fr: {
@@ -360,15 +360,15 @@
         newCarPromoPrefix: 'Vous pouvez économiser environ',
         newCarPromoSuffix: "en choisissant un véhicule d’occasion plutôt qu’un véhicule neuf.",
         footerRights: 'Tous droits réservés',
-        resaleTitle: 'Revente & Remboursement de l’avantage (LF 2025)',
-        resaleMonthsLabel: 'Mois après la douane (revente prévue)',
-        resaleAdvantageAmount: 'Avantage fiscal obtenu',
-        resaleRefundAmount: 'Montant à rembourser',
+        resaleTitle: 'Avantage fiscal véhicule d’occasion & revente (LF 2025)',
+        resaleMonthsLabel: 'Mois après la douane (date de revente)',
+        resaleAdvantageAmount: 'Avantage fiscal obtenu sur la voiture d’occasion',
+        resaleRefundAmount: 'Montant à rembourser à l’État',
         resaleRefundNone: 'Aucun remboursement après 36 mois de douane',
         resaleRefundFull: 'Revente ≤ 12 mois : remboursement 100 % de l’avantage',
         resaleRefund66: 'Revente entre 12 et 24 mois : remboursement 66 % de l’avantage',
         resaleRefund33: 'Revente entre 24 et 36 mois : remboursement 33 % de l’avantage',
-        resaleLawNote: 'Selon la Loi de Finances 2025, la revente d’un véhicule de moins de 3 ans avant 36 mois impose la restitution totale ou partielle de l’avantage fiscal.',
+        resaleLawNote: 'Selon la Loi de Finances 2025, la revente d’un véhicule de moins de 3 ans avant 36 mois impose la restitution totale ou partielle de l’avantage fiscal lié à la réduction sur les droits de douane.',
         resaleSavedLabel: 'Avantage conservé après remboursement'
       },
       tz: {
@@ -436,15 +436,15 @@
         newCarPromoPrefix: 'Tzemreḍ ad tesɛuḍ approx.',
         newCarPromoSuffix: 'ma tferneḍ tusniwin deg umkan n tkerrust tamaynut.',
         footerRights: 'Izerfan akk ttwahfaḍen',
-        resaleTitle: 'Aznuzu d tuɣalin n tallalt (LF 2025)',
-        resaleMonthsLabel: 'Imyuren seld lmerk (azemz n uznuzu)',
-        resaleAdvantageAmount: 'Tallalt n tazərft i ttwafkem',
-        resaleRefundAmount: 'Tazmilt ara d-tettuɣal',
-        resaleRefundNone: 'Ulac tazmilt ma yeznuzu seld 36 n wagguren',
+        resaleTitle: 'Tallalt n tkerrust tusniwin & aznuzu (LF 2025)',
+        resaleMonthsLabel: 'Igguren seld lmerk (azemz n uznuzu)',
+        resaleAdvantageAmount: 'Tallalt n tazərft ɣef tkerrust tusniwin',
+        resaleRefundAmount: 'Tazmilt ara d-tettuɣal i teɣdudant',
+        resaleRefundNone: 'Ulac tazmilt sedd 36 n wagguren',
         resaleRefundFull: 'Aznuzu ≤ 12 ayowr: tuɣalin 100% n tallalt',
         resaleRefund66: 'Aznuzu gar 12 d 24 ayowr: tuɣalin 66% n tallalt',
         resaleRefund33: 'Aznuzu gar 24 d 36 ayowr: tuɣalin 33% n tallalt',
-        resaleLawNote: 'S usɣel n tedrimt 2025: aznuzu n tkerust ddaw 3 iseggasen send 36 ayowr yesra tuɣalin n tallalt.',
+        resaleLawNote: 'S usɣel n tedrimt 2025: aznuzu n tkerust ddaw 3 iseggasen send 36 ayowr yesra tuɣalin n tallalt n tazərft i d-yeffɣen seg usenqes ɣef DD.',
         resaleSavedLabel: 'Tallalt i d-yeqqimen seld tuɣalin'
       }
     };
@@ -640,14 +640,16 @@
 
       const containerClass = isRTL ? 'rtl' : 'ltr';
 
-      // --- LF 2025 resale computation (only used cars) ---
+      // --- LF 2025 resale computation (ALWAYS for used cars) ---
       const resaleInfo = (() => {
-        if (!results || !results.taxAdvantageAmount || vehicleAge !== 'used') return null;
+        if (!results || vehicleAge !== 'used') return null;
+
+        const advantage = results.taxAdvantageAmount || 0;
         const m = resaleMonths || 0;
         let rate = 0;
         let labelKey = 'resaleRefundNone';
 
-        if (m <= 12) {
+        if (m > 0 && m <= 12) {
           rate = 1;
           labelKey = 'resaleRefundFull';
         } else if (m > 12 && m <= 24) {
@@ -661,10 +663,10 @@
           labelKey = 'resaleRefundNone';
         }
 
-        const refund = results.taxAdvantageAmount * rate;
-        const keep = results.taxAdvantageAmount - refund;
+        const refund = advantage * rate;
+        const keep = advantage - refund;
 
-        return { rate, refund, keep, labelKey };
+        return { rate, refund, keep, labelKey, advantage };
       })();
 
       return (
@@ -1173,8 +1175,8 @@
                         )}
                       </div>
 
-                      {/* NEW: Resale & advantage (LF 2025) – only for used cars */}
-                      {vehicleAge === 'used' && results.taxAdvantageAmount > 0 && resaleInfo && (
+                      {/* LF 2025: Avantage fiscal & revente – ALWAYS visible for used cars */}
+                      {vehicleAge === 'used' && resaleInfo && (
                         <div className="bg-violet-50 border border-violet-200 rounded-md p-3">
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <div className="flex items-center gap-2">
@@ -1187,8 +1189,11 @@
 
                           <div className="space-y-1 text-[11px] md:text-xs mb-2">
                             <div className="flex justify-between bg-white rounded px-2 py-1">
-                              <span>{t.resaleAdvantageAmount} ({formatNumber(results.taxAdvantageRate)}%)</span>
-                              <span>{formatCurrency(results.taxAdvantageAmount)}</span>
+                              <span>
+                                {t.resaleAdvantageAmount}
+                                {results.taxAdvantageRate > 0 ? ` (${formatNumber(results.taxAdvantageRate)}%)` : ''}
+                              </span>
+                              <span>{formatCurrency(resaleInfo.advantage)}</span>
                             </div>
                           </div>
 
