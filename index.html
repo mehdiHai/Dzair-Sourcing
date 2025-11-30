@@ -10,7 +10,13 @@
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- PWA manifest -->
   <link rel="manifest" href="./manifest.json" />
+
+  <!-- jsPDF UMD for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <script>
     tailwind.config = {
       theme: {
@@ -138,7 +144,7 @@
   <script type="text/babel">
     const { useState, useEffect, useCallback } = React;
 
-    /* ------------ Icons ------------ */
+    /* ------------ Icons (inline SVG) ------------ */
 
     const IconCar = ({ className = "w-5 h-5" }) => (
       <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -293,7 +299,19 @@
         resaleRefund66: 'إعادة بيع بين 12 و24 شهراً: إرجاع 66٪ من الامتياز',
         resaleRefund33: 'إعادة بيع بين 24 و36 شهراً: إرجاع 33٪ من الامتياز',
         resaleLawNote: 'حسب قانون المالية 2025: بيع سيارة أقل من 3 سنوات قبل 36 شهراً يفرض استرجاع جزء أو كل الامتياز الجبائي المرتبط بالتخفيض على DD.',
-        resaleSavedLabel: 'الامتياز المتبقي بعد الإرجاع'
+        resaleSavedLabel: 'الامتياز المتبقي بعد الإرجاع',
+        resaleRiskTitle: 'مستوى الخطر الجبائي عند إعادة البيع',
+        resaleRiskHigh: 'خطر مرتفع جداً (استرجاع 100٪ من الامتياز)',
+        resaleRiskMedium: 'خطر متوسط (استرجاع 66٪ من الامتياز)',
+        resaleRiskLow: 'خطر ضعيف (استرجاع 33٪ من الامتياز)',
+        resaleRiskNone: 'لا يوجد استرجاع (بعد 36 شهراً)',
+        resaleTimelineTitle: 'جدول زمني مبسط',
+        resaleTimeline0_12: '0 إلى 12 شهر: استرجاع 100٪ من الامتياز',
+        resaleTimeline12_24: '12 إلى 24 شهر: استرجاع 66٪ من الامتياز',
+        resaleTimeline24_36: '24 إلى 36 شهر: استرجاع 33٪ من الامتياز',
+        resaleTimelineAfter36: 'بعد 36 شهر: لا استرجاع للامتياز',
+        pdfDownload: 'تحميل تقرير PDF مفصل',
+        pdfSubtitle: 'نسخة للطباعة للبنك أو الجمارك أو الزبون'
       },
       fr: {
         title: 'Dzair Sourcing Cars',
@@ -369,7 +387,19 @@
         resaleRefund66: 'Revente entre 12 et 24 mois : remboursement 66 % de l’avantage',
         resaleRefund33: 'Revente entre 24 et 36 mois : remboursement 33 % de l’avantage',
         resaleLawNote: 'Selon la Loi de Finances 2025, la revente d’un véhicule de moins de 3 ans avant 36 mois impose la restitution totale ou partielle de l’avantage fiscal lié à la réduction sur les droits de douane.',
-        resaleSavedLabel: 'Avantage conservé après remboursement'
+        resaleSavedLabel: 'Avantage conservé après remboursement',
+        resaleRiskTitle: 'Niveau de risque fiscal en cas de revente',
+        resaleRiskHigh: 'Risque ÉLEVÉ (100 % de l’avantage à rembourser)',
+        resaleRiskMedium: 'Risque MOYEN (66 % de l’avantage à rembourser)',
+        resaleRiskLow: 'Risque FAIBLE (33 % de l’avantage à rembourser)',
+        resaleRiskNone: 'Aucun remboursement exigé (après 36 mois)',
+        resaleTimelineTitle: 'Frise chronologique simplifiée',
+        resaleTimeline0_12: '0 à 12 mois : reversement 100 %',
+        resaleTimeline12_24: '12 à 24 mois : reversement 66 %',
+        resaleTimeline24_36: '24 à 36 mois : reversement 33 %',
+        resaleTimelineAfter36: 'Après 36 mois : aucun reversement',
+        pdfDownload: 'Télécharger le rapport PDF détaillé',
+        pdfSubtitle: 'Version imprimable pour banque, douane ou client'
       },
       tz: {
         title: 'Dzair Sourcing Cars',
@@ -445,12 +475,25 @@
         resaleRefund66: 'Aznuzu gar 12 d 24 ayowr: tuɣalin 66% n tallalt',
         resaleRefund33: 'Aznuzu gar 24 d 36 ayowr: tuɣalin 33% n tallalt',
         resaleLawNote: 'S usɣel n tedrimt 2025: aznuzu n tkerust ddaw 3 iseggasen send 36 ayowr yesra tuɣalin n tallalt n tazərft i d-yeffɣen seg usenqes ɣef DD.',
-        resaleSavedLabel: 'Tallalt i d-yeqqimen seld tuɣalin'
+        resaleSavedLabel: 'Tallalt i d-yeqqimen seld tuɣalin',
+        resaleRiskTitle: 'Aswir n wugur n tazmilt',
+        resaleRiskHigh: 'Uguren meqqren (100% n tallalt ad tettwaɣelsent)',
+        resaleRiskMedium: 'Uguren alemmas (66% n tallalt ad tettwaɣelsent)',
+        resaleRiskLow: 'Uguren meẓẓiyen (33% n tallalt ad tettwaɣelsent)',
+        resaleRiskNone: 'Ulac aɣelsan seld 36 n wagguren',
+        resaleTimelineTitle: 'Akud n uznuzu',
+        resaleTimeline0_12: '0–12 ayowr: aɣelsan 100%',
+        resaleTimeline12_24: '12–24 ayowr: aɣelsan 66%',
+        resaleTimeline24_36: '24–36 ayowr: aɣelsan 33%',
+        resaleTimelineAfter36: 'Seld 36 ayowr: ulac aɣelsan',
+        pdfDownload: 'Sider rapport PDF ummuggar',
+        pdfSubtitle: 'Tawsit i usiggez, tabanka neɣ lmerk'
       }
     };
 
     /* ------------ Tax rates ------------ */
 
+    // Used car final rates (combined)
     const usedCarTaxRates = {
       electric: { baseRate: 57.08, discount: 80, finalRate: 11.42 },
       gasolineSmall: { baseRate: 39.23, discount: 50, finalRate: 19.62 },
@@ -459,12 +502,13 @@
       hybridLarge: { baseRate: 151.33, discount: 20, finalRate: 121.06 }
     };
 
+    // New car DD rates only (TCS & TVA fixed)
     const newCarDdRates = {
-      electric: 30,
-      gasolineSmall: 15,
-      gasolineLarge: 30,
-      hybridSmall: 15,
-      hybridLarge: 30
+      electric: 30,        // EV
+      gasolineSmall: 15,   // Essence ≤1800
+      gasolineLarge: 30,   // Essence >1800
+      hybridSmall: 15,     // Hybride ≤1800
+      hybridLarge: 30      // Hybride >1800
     };
 
     const TAX_TCS = 3;
@@ -507,11 +551,18 @@
       const [results, setResults] = useState(null);
       const [showResults, setShowResults] = useState(false);
       const [potentialUsedSavings, setPotentialUsedSavings] = useState(0);
-      const [resaleMonths, setResaleMonths] = useState(36);
+      const [resaleMonths, setResaleMonths] = useState(36); // LF 2025 resale
 
       const t = translations[lang];
       const isRTL = lang === 'ar';
-      const containerClass = isRTL ? 'rtl' : 'ltr';
+
+      const engineButtons = [
+        { value: 'electric', label: translations[lang].electric, rateUsed: '11.42%' },
+        { value: 'gasolineSmall', label: translations[lang].gasolineSmall, rateUsed: '19.62%' },
+        { value: 'gasolineLarge', label: translations[lang].gasolineLarge, rateUsed: '121.06%' },
+        { value: 'hybridSmall', label: translations[lang].hybridSmall, rateUsed: '19.62%' },
+        { value: 'hybridLarge', label: translations[lang].hybridLarge, rateUsed: '121.06%' }
+      ];
 
       const calculate = useCallback(() => {
         const price = parseFloat(carPrice) || 0;
@@ -629,15 +680,9 @@
         document.documentElement.lang = lang;
       }, [lang]);
 
-      const engineButtons = [
-        { value: 'electric', label: translations[lang].electric, rateUsed: '11.42%' },
-        { value: 'gasolineSmall', label: translations[lang].gasolineSmall, rateUsed: '19.62%' },
-        { value: 'gasolineLarge', label: translations[lang].gasolineLarge, rateUsed: '121.06%' },
-        { value: 'hybridSmall', label: translations[lang].hybridSmall, rateUsed: '19.62%' },
-        { value: 'hybridLarge', label: translations[lang].hybridLarge, rateUsed: '121.06%' }
-      ];
+      const containerClass = isRTL ? 'rtl' : 'ltr';
 
-      // --- LF 2025 resale computation (used cars) ---
+      // --- LF 2025 resale computation (ALWAYS for used cars) ---
       const resaleInfo = (() => {
         if (!results || vehicleAge !== 'used') return null;
 
@@ -665,6 +710,148 @@
 
         return { rate, refund, keep, labelKey, advantage };
       })();
+
+      // --- Risk label for resale ---
+      const resaleRiskText = (() => {
+        if (!resaleInfo) return '';
+        const r = resaleInfo.rate;
+        if (r >= 0.99) return t.resaleRiskHigh;
+        if (r > 0.5) return t.resaleRiskMedium;
+        if (r > 0) return t.resaleRiskLow;
+        return t.resaleRiskNone;
+      })();
+
+      // --- PDF Export (premium layout) ---
+      const exportPDF = useCallback(() => {
+        if (!results) return;
+        const jsPdfGlobal = window.jspdf || window.jsPDF;
+        const jsPDF = jsPdfGlobal && jsPdfGlobal.jsPDF ? jsPdfGlobal.jsPDF : jsPdfGlobal;
+
+        if (!jsPDF) {
+          alert('PDF non disponible dans ce navigateur.');
+          return;
+        }
+
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const marginX = 15;
+        let y = 15;
+
+        const engineLabel = (engineButtons.find(b => b.value === engineType)?.label) || engineType;
+        const vehicleAgeLabel = vehicleAge === 'new' ? t.brandNew : t.usedUnder3;
+
+        // Header
+        doc.setDrawColor(0, 98, 51);
+        doc.setLineWidth(0.6);
+        doc.roundedRect(marginX, y, 180 - marginX * 0.5, 18, 3, 3);
+        doc.setFontSize(16);
+        doc.setTextColor(0, 98, 51);
+        doc.text(t.title, 105, y + 7, { align: 'center' });
+        doc.setFontSize(10);
+        doc.setTextColor(90);
+        doc.text(t.subtitle, 105, y + 13, { align: 'center' });
+        y += 25;
+
+        // Section: Basic info
+        doc.setFontSize(12);
+        doc.setTextColor(30);
+        doc.text('1. Vehicle & deal summary', marginX, y);
+        y += 6;
+        doc.setFontSize(10);
+        doc.text(`• ${t.vehicleAge}: ${vehicleAgeLabel}`, marginX, y); y += 5;
+        doc.text(`• ${t.engineType}: ${engineLabel}`, marginX, y); y += 5;
+        doc.text(`• ${t.carPrice}: ${formatCurrency(results.price, currency)} (${currency})`, marginX, y); y += 5;
+        doc.text(`• ${t.freightCost}: ${formatCurrency(results.freight, currency)} (${currency})`, marginX, y); y += 8;
+
+        // Section: Cost breakdown
+        doc.setFontSize(12);
+        doc.setTextColor(30);
+        doc.text('2. Coût global détaillé (DZD)', marginX, y);
+        y += 6;
+        doc.setFontSize(10);
+
+        const lineItems = [
+          { label: t.fobPrice, value: formatCurrency(results.fobDZD) },
+          { label: t.freightCost, value: formatCurrency(results.freightDZD) },
+          { label: t.otherFees, value: formatCurrency(results.localExpenses) },
+          { label: t.customsCIF, value: formatCurrency(results.cifCustoms) },
+          { label: t.customsRights, value: formatCurrency(results.totalTax) },
+        ];
+        if (results.newCarTaxAmount > 0) {
+          lineItems.push({ label: t.newCarTax, value: formatCurrency(results.newCarTaxAmount) });
+        }
+        lineItems.push({ label: t.totalCost, value: formatCurrency(results.total) });
+
+        lineItems.forEach(item => {
+          doc.text(`• ${item.label}`, marginX, y);
+          doc.text(item.value, 200 - marginX, y, { align: 'right' });
+          y += 5;
+        });
+
+        y += 4;
+        doc.setFontSize(9);
+        doc.setTextColor(110);
+        doc.text(
+          `${t.blackMarketRate}: ${formatNumber(results.blackRate)} DZD/${currency}  |  ${t.officialRate}: ${formatNumber(results.officialRate)} DZD/${currency}`,
+          marginX,
+          y
+        );
+        y += 8;
+
+        // Section: Used car tax advantage
+        if (vehicleAge === 'used' && resaleInfo && results.taxAdvantageAmount > 0) {
+          doc.setFontSize(12);
+          doc.setTextColor(30);
+          doc.text('3. Avantage fiscal véhicule d’occasion', marginX, y);
+          y += 6;
+          doc.setFontSize(10);
+          doc.text(`• ${t.resaleAdvantageAmount}`, marginX, y);
+          doc.text(formatCurrency(resaleInfo.advantage), 200 - marginX, y, { align: 'right' });
+          y += 5;
+          doc.text(`• ${t.baseRate}: ${formatNumber(results.taxes.baseRate)}%`, marginX, y); y += 5;
+          doc.text(`• ${t.finalRate}: ${formatNumber(results.taxes.finalRate)}%`, marginX, y); y += 8;
+        }
+
+        // Section: LF 2025 resale rule
+        if (vehicleAge === 'used' && resaleInfo) {
+          doc.setFontSize(12);
+          doc.setTextColor(30);
+          doc.text('4. Loi de Finances 2025 – Revente & reversement', marginX, y);
+          y += 6;
+          doc.setFontSize(10);
+
+          doc.text(`• ${t.resaleMonthsLabel}: ${resaleMonths}`, marginX, y); y += 5;
+          doc.text(`• ${t.resaleRefundAmount}`, marginX, y);
+          doc.text(formatCurrency(resaleInfo.refund), 200 - marginX, y, { align: 'right' });
+          y += 5;
+          if (resaleInfo.keep > 0) {
+            doc.text(`• ${t.resaleSavedLabel}`, marginX, y);
+            doc.text(formatCurrency(resaleInfo.keep), 200 - marginX, y, { align: 'right' });
+            y += 5;
+          }
+          y += 3;
+          doc.setTextColor(180, 40, 40);
+          doc.text(`⚠ ${t.resaleRiskTitle}`, marginX, y); y += 5;
+          doc.setFontSize(9);
+          doc.text(resaleRiskText, marginX, y); y += 8;
+
+          doc.setTextColor(90);
+          doc.text(t.resaleTimelineTitle, marginX, y); y += 5;
+          doc.text(`• ${t.resaleTimeline0_12}`, marginX, y); y += 4;
+          doc.text(`• ${t.resaleTimeline12_24}`, marginX, y); y += 4;
+          doc.text(`• ${t.resaleTimeline24_36}`, marginX, y); y += 4;
+          doc.text(`• ${t.resaleTimelineAfter36}`, marginX, y); y += 8;
+        }
+
+        // Legal refs footer
+        doc.setDrawColor(200);
+        doc.line(marginX, 280, 200 - marginX, 280);
+        doc.setFontSize(8);
+        doc.setTextColor(120);
+        doc.text(`${t.legalRef}: ${t.decree}; ${t.article}`, marginX, 285);
+        doc.text('https://www.douane.gov.dz', 200 - marginX, 285, { align: 'right' });
+
+        doc.save('Dzair_Sourcing_Cars_Report.pdf');
+      }, [results, t, vehicleAge, resaleInfo, carPrice, currency, engineType, engineButtons]);
 
       return (
         <div className={`min-h-screen pb-10 ${containerClass}`}>
@@ -702,7 +889,7 @@
             </div>
           </header>
 
-          {/* Savings banner new vs used */}
+          {/* Savings banner for new vs used */}
           {vehicleAge === 'new' && carPrice && potentialUsedSavings > 0 && (
             <div className="max-w-6xl mx-auto px-4 mt-4">
               <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg flex items-start gap-3">
@@ -1172,7 +1359,7 @@
                         )}
                       </div>
 
-                      {/* LF 2025: Avantage fiscal + Revente (Option D) */}
+                      {/* LF 2025: Avantage fiscal & revente – ALWAYS visible for used cars */}
                       {vehicleAge === 'used' && resaleInfo && (
                         <div className="bg-violet-50 border border-violet-200 rounded-md p-3">
                           <div className="flex items-start justify-between gap-2 mb-2">
@@ -1184,17 +1371,12 @@
                             </div>
                           </div>
 
-                          {/* Static rules */}
-                          <div className="mb-2 text-[11px] md:text-xs text-violet-800">
-                            <ul className="space-y-1">
-                              <li>• {t.resaleRefundFull}</li>
-                              <li>• {t.resaleRefund66}</li>
-                              <li>• {t.resaleRefund33}</li>
-                              <li>• {t.resaleRefundNone}</li>
-                            </ul>
+                          {/* Risk banner */}
+                          <div className="mb-2 bg-violet-100 border border-violet-200 rounded px-2 py-1.5 text-[11px] text-violet-800">
+                            <span className="font-semibold mr-1">⚠ {t.resaleRiskTitle}:</span>
+                            <span>{resaleRiskText}</span>
                           </div>
 
-                          {/* Advantage amount */}
                           <div className="space-y-1 text-[11px] md:text-xs mb-2">
                             <div className="flex justify-between bg-white rounded px-2 py-1">
                               <span>
@@ -1205,7 +1387,6 @@
                             </div>
                           </div>
 
-                          {/* Calculator: resale months */}
                           <div className="mb-2">
                             <label className="block text-[11px] font-medium text-violet-800 mb-1">
                               {t.resaleMonthsLabel}
@@ -1225,8 +1406,7 @@
                             </div>
                           </div>
 
-                          {/* Refund & kept advantage */}
-                          <div className="space-y-1 text-[11px] md:text-xs">
+                          <div className="space-y-1 text-[11px] md:text-xs mb-2">
                             <div className="flex justify-between bg-violet-100 rounded px-2 py-1">
                               <span>{t.resaleRefundAmount}</span>
                               <span>{formatCurrency(resaleInfo.refund)}</span>
@@ -1239,13 +1419,24 @@
                             )}
                           </div>
 
+                          {/* Timeline text */}
+                          <div className="mt-1 text-[11px] text-violet-800">
+                            <div className="font-semibold mb-1">{t.resaleTimelineTitle}</div>
+                            <ul className="space-y-0.5">
+                              <li>• {t.resaleTimeline0_12}</li>
+                              <li>• {t.resaleTimeline12_24}</li>
+                              <li>• {t.resaleTimeline24_36}</li>
+                              <li>• {t.resaleTimelineAfter36}</li>
+                            </ul>
+                          </div>
+
                           <p className="text-[11px] text-violet-700 mt-2">
                             {t.resaleLawNote}
                           </p>
                         </div>
                       )}
 
-                      {/* New car vignette */}
+                      {/* New car tax */}
                       <div className={`rounded-md p-3 border ${
                         vehicleAge === 'new'
                           ? 'bg-red-50 border-red-200'
@@ -1299,6 +1490,20 @@
                             {formatCurrency(results.total)}
                           </span>
                         </div>
+                      </div>
+
+                      {/* PDF button */}
+                      <div className="mt-2">
+                        <button
+                          onClick={exportPDF}
+                          className="w-full mt-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs md:text-sm font-semibold border border-gray-300 bg-white hover:bg-gray-50 text-gray-800"
+                        >
+                          <span>📄</span>
+                          <span>{t.pdfDownload}</span>
+                        </button>
+                        <p className="mt-1 text-[11px] text-gray-500 text-center">
+                          {t.pdfSubtitle}
+                        </p>
                       </div>
 
                       {/* Legal refs */}
