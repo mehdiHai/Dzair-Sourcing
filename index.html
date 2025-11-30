@@ -10,7 +10,7 @@
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="manifest" href="./manifest.json" />
+  <link rel="manifest" href="./manifest.json" />
   <script>
     tailwind.config = {
       theme: {
@@ -138,7 +138,7 @@
   <script type="text/babel">
     const { useState, useEffect, useCallback } = React;
 
-    /* ------------ Icons (inline SVG, no emojis) ------------ */
+    /* ------------ Icons (inline SVG) ------------ */
 
     const IconCar = ({ className = "w-5 h-5" }) => (
       <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -283,6 +283,17 @@
         savingsBannerInfo: 'معظم الزبائن يختارون السيارات المستعملة لتفادي 150 000 دج الخاصة بالسيارات الجديدة والاستفادة من رسوم جمركية أقل.',
         newCarPromoPrefix: 'يمكنك توفير تقريبًا',
         newCarPromoSuffix: 'إذا اخترت سيارة مستعملة بدلًا من الجديدة.',
+        // Re-sale law
+        resaleTitle: 'حساب إعادة البيع أقل من 36 شهراً (امتياز جبائي)',
+        resalePeriodLabel: 'مدة إعادة البيع',
+        resaleOption0_12: 'أقل من 12 شهراً (إعادة 100٪ من الإمتياز)',
+        resaleOption12_24: 'من 12 إلى 24 شهراً (إعادة 66٪ من الإمتياز)',
+        resaleOption24_36: 'من 24 إلى 36 شهراً (إعادة 33٪ من الإمتياز)',
+        resaleOption36_plus: 'أكثر من 36 شهراً (لا شيء مستحق)',
+        resaleAdvantageLabel: 'الإمتياز الجبائي الممنوح على السيارة المستعملة',
+        resaleRefundLabel: 'المبلغ الواجب سداده عند إعادة البيع',
+        resalePercentLabel: 'نسبة التسديد حسب مدة إعادة البيع',
+        resaleLawNote: 'طبقاً لقانون المالية 2025: لا يمكن التنازل عن السيارة المستعملة قبل 36 شهراً إلا بعد إعادة جزء من الإمتياز الجبائي الممنوح.',
         footerRights: 'جميع الحقوق محفوظة'
       },
       fr: {
@@ -349,6 +360,17 @@
         savingsBannerInfo: 'La majorité des clients choisissent une voiture d’occasion pour éviter la vignette de 150 000 DZD et bénéficier de taux de douane plus faibles.',
         newCarPromoPrefix: 'Vous pouvez économiser environ',
         newCarPromoSuffix: "en choisissant un véhicule d’occasion plutôt qu’un véhicule neuf.",
+        // Re-sale law
+        resaleTitle: 'Revente avant 36 mois (avantage fiscal)',
+        resalePeriodLabel: 'Durée de revente',
+        resaleOption0_12: 'Moins de 12 mois (remboursement 100 % de l’avantage)',
+        resaleOption12_24: '12 à 24 mois (remboursement 66 %)',
+        resaleOption24_36: '24 à 36 mois (remboursement 33 %)',
+        resaleOption36_plus: 'Plus de 36 mois (0 % à rembourser)',
+        resaleAdvantageLabel: 'Avantage fiscal accordé sur le véhicule d’occasion',
+        resaleRefundLabel: 'Montant à rembourser en cas de revente',
+        resalePercentLabel: 'Pourcentage de remboursement selon la durée',
+        resaleLawNote: "Selon la Loi de Finances 2025 : la revente d’un véhicule d’occasion avant 36 mois entraîne le remboursement d’une partie de l’avantage fiscal.",
         footerRights: 'Tous droits réservés'
       },
       tz: {
@@ -415,13 +437,23 @@
         savingsBannerInfo: 'Ugar n yimessaɣen frekneḍ tusniwin akken ad rwen 150 000 DZD n tkerrust tamaynut yerna ad senḥun azrefen n lmerk.',
         newCarPromoPrefix: 'Tzemreḍ ad tesɛuḍ approx.',
         newCarPromoSuffix: 'ma tferneḍ tusniwin deg umkan n tkerrust tamaynut.',
+        // Re-sale law
+        resaleTitle: 'Aẓen n tkerrust ddaw 36 n waggur (afrust n tebzert)',
+        resalePeriodLabel: 'Tamezla n uzzen',
+        resaleOption0_12: 'Ddaw 12 n waggur (100% n ufrust)',
+        resaleOption12_24: '12–24 n waggur (66% n ufrust)',
+        resaleOption24_36: '24–36 n waggur (33% n ufrust)',
+        resaleOption36_plus: 'Ugar n 36 n waggur (0% ad yettuɣal)',
+        resaleAdvantageLabel: 'Afṛust n tebzert i d-yettunefk ɣef tkerrust tusniwin',
+        resaleRefundLabel: 'Amdan ara yettuɣal ma yettuzzen tkerrust',
+        resalePercentLabel: 'Afus n ufrust s umennuɣ n uzzen',
+        resaleLawNote: 'According to the 2025 Finance Law, re-selling a used vehicle before 36 months implies paying back part of the fiscal advantage.',
         footerRights: 'Izerfan akk ttwahfaḍen'
       }
     };
 
     /* ------------ Tax rates ------------ */
 
-    // Used car final rates
     const usedCarTaxRates = {
       electric: { baseRate: 57.08, discount: 80, finalRate: 11.42 },
       gasolineSmall: { baseRate: 39.23, discount: 50, finalRate: 19.62 },
@@ -432,11 +464,11 @@
 
     // New car DD rates only (TCS & TVA fixed)
     const newCarDdRates = {
-      electric: 30,        // EV
-      gasolineSmall: 15,   // Essence ≤1800
-      gasolineLarge: 30,   // Essence >1800
-      hybridSmall: 15,     // Hybride ≤1800
-      hybridLarge: 30      // Hybride >1800
+      electric: 30,
+      gasolineSmall: 15,
+      gasolineLarge: 30,
+      hybridSmall: 15,
+      hybridLarge: 30
     };
 
     const TAX_TCS = 3;
@@ -480,6 +512,13 @@
       const [showResults, setShowResults] = useState(false);
       const [potentialUsedSavings, setPotentialUsedSavings] = useState(0);
 
+      // new states for resale law
+      const [showResalePanel, setShowResalePanel] = useState(false);
+      const [resalePeriod, setResalePeriod] = useState('');
+      const [fiscalAdvantage, setFiscalAdvantage] = useState(0);
+      const [resaleRefund, setResaleRefund] = useState(0);
+      const [resalePercent, setResalePercent] = useState(0);
+
       const t = translations[lang];
       const isRTL = lang === 'ar';
 
@@ -497,6 +536,9 @@
           setShowResults(false);
           setResults(null);
           setPotentialUsedSavings(0);
+          setFiscalAdvantage(0);
+          setResaleRefund(0);
+          setResalePercent(0);
           return;
         }
 
@@ -509,6 +551,11 @@
         let totalTax = 0;
         let newCarTaxAmount = 0;
         let usedCarTaxPreview = 0;
+
+        // new vars for resale law
+        let fiscalAdvantageCalc = 0;
+        let resaleRefundCalc = 0;
+        let resalePercentCalc = 0;
 
         if (vehicleAge === 'new') {
           const ddRate = newCarDdRates[engineType] || 0;
@@ -537,6 +584,11 @@
           } else {
             setPotentialUsedSavings(0);
           }
+
+          // for new car, no fiscal advantage (this law is only for used)
+          fiscalAdvantageCalc = 0;
+          resaleRefundCalc = 0;
+          resalePercentCalc = 0;
         } else {
           const rateInfo = usedCarTaxRates[engineType];
           if (rateInfo) {
@@ -547,7 +599,23 @@
               finalRate: rateInfo.finalRate,
               breakdown: false
             };
+
+            // benefit = CIF × (baseRate − finalRate)/100
+            const diffRate = rateInfo.baseRate - rateInfo.finalRate;
+            if (diffRate > 0) {
+              fiscalAdvantageCalc = cifCustoms * (diffRate / 100);
+            }
+
+            // resale refund % based on period
+            if (resalePeriod === '0-12') resalePercentCalc = 100;
+            else if (resalePeriod === '12-24') resalePercentCalc = 66;
+            else if (resalePeriod === '24-36') resalePercentCalc = 33;
+            else if (resalePeriod === '36+') resalePercentCalc = 0;
+            else resalePercentCalc = 0;
+
+            resaleRefundCalc = fiscalAdvantageCalc * (resalePercentCalc / 100);
           }
+
           newCarTaxAmount = 0;
           setPotentialUsedSavings(0);
         }
@@ -573,21 +641,60 @@
           usedCarTaxPreview
         });
         setShowResults(true);
+
+        // update resale-related states
+        setFiscalAdvantage(fiscalAdvantageCalc);
+        setResaleRefund(resaleRefundCalc);
+        setResalePercent(resalePercentCalc);
       }, [
-        carPrice, freightInsurance, inspection, documentation, portBroker,
-        currency, blackUSD, blackEUR, officialUSD, officialEUR, vehicleAge, engineType
+        carPrice,
+        freightInsurance,
+        inspection,
+        documentation,
+        portBroker,
+        currency,
+        blackUSD,
+        blackEUR,
+        officialUSD,
+        officialEUR,
+        vehicleAge,
+        engineType,
+        resalePeriod
       ]);
 
       useEffect(() => {
         if (carPrice) calculate();
       }, [
-        carPrice, freightInsurance, inspection, documentation, portBroker,
-        currency, blackUSD, blackEUR, officialUSD, officialEUR, vehicleAge, engineType, calculate
+        carPrice,
+        freightInsurance,
+        inspection,
+        documentation,
+        portBroker,
+        currency,
+        blackUSD,
+        blackEUR,
+        officialUSD,
+        officialEUR,
+        vehicleAge,
+        engineType,
+        resalePeriod,
+        calculate
       ]);
 
       useEffect(() => {
         document.documentElement.lang = lang;
       }, [lang]);
+
+      // reset resale panel when switching to new car
+      useEffect(() => {
+        if (vehicleAge === 'new') {
+          setShowResalePanel(false);
+          setResalePeriod('');
+          setFiscalAdvantage(0);
+          setResaleRefund(0);
+          setResalePercent(0);
+        }
+      }, [vehicleAge]);
 
       const engineButtons = [
         { value: 'electric', label: t.electric, rateUsed: '11.42%' },
@@ -1105,6 +1212,71 @@
                         )}
                       </div>
 
+                      {/* Resale law panel (used cars only) */}
+                      {vehicleAge === 'used' && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                          <button
+                            type="button"
+                            onClick={() => setShowResalePanel(!showResalePanel)}
+                            className="w-full flex items-center justify-between text-xs font-semibold text-amber-800"
+                          >
+                            <span className="flex items-center gap-2">
+                              <IconShieldCheck className="w-4 h-4 text-amber-700" />
+                              <span>{t.resaleTitle}</span>
+                            </span>
+                            <span>{showResalePanel ? '▼' : '►'}</span>
+                          </button>
+
+                          {showResalePanel && (
+                            <div className="mt-3 space-y-2 text-[11px] md:text-xs">
+                              <div>
+                                <label className="block mb-1 font-semibold text-amber-800">
+                                  {t.resalePeriodLabel}
+                                </label>
+                                <select
+                                  value={resalePeriod}
+                                  onChange={(e) => setResalePeriod(e.target.value)}
+                                  className="w-full p-2 rounded border border-amber-300 bg-white text-xs"
+                                >
+                                  <option value="">{'—'}</option>
+                                  <option value="0-12">{t.resaleOption0_12}</option>
+                                  <option value="12-24">{t.resaleOption12_24}</option>
+                                  <option value="24-36">{t.resaleOption24_36}</option>
+                                  <option value="36+">{t.resaleOption36_plus}</option>
+                                </select>
+                              </div>
+
+                              {resalePeriod && (
+                                <div className="bg-white rounded-md border border-amber-200 p-2 space-y-1">
+                                  <div className="flex justify-between">
+                                    <span>{t.resaleAdvantageLabel}</span>
+                                    <span className="font-semibold">
+                                      {formatCurrency(fiscalAdvantage)}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>{t.resalePercentLabel}</span>
+                                    <span className="font-semibold">
+                                      {resalePercent}%
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>{t.resaleRefundLabel}</span>
+                                    <span className="font-semibold text-red-700">
+                                      {formatCurrency(resaleRefund)}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+
+                              <p className="text-amber-700 mt-1">
+                                {t.resaleLawNote}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* New car tax */}
                       <div className={`rounded-md p-3 border ${
                         vehicleAge === 'new'
@@ -1218,9 +1390,9 @@
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js')
-       .then(() => console.log("Service Worker registered"))
-       .catch(err => console.log("SW registration failed", err));
- }
-</script>
+        .then(() => console.log("Service Worker registered"))
+        .catch(err => console.log("SW registration failed", err));
+    }
+  </script>
 </body>
 </html>
