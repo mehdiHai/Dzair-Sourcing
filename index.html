@@ -142,7 +142,7 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <script type="text/babel">
-    const { useState, useEffect, useCallback } = React;
+    const { useState, useEffect, useCallback, useRef } = React;
 
     /*
      * Single-file React SPA used as the import-cost calculator.
@@ -582,6 +582,14 @@
       const [resalePeriod, setResalePeriod] = useState('24_36');
 
       const t = translations[lang];
+      const translationRef = useRef(t);
+
+      useEffect(() => {
+        translationRef.current = translations[lang];
+        if (rateError) {
+          setRateError(translations[lang].rateFetchError);
+        }
+      }, [lang, rateError]);
       const isRTL = lang === 'ar';
 
       const engineButtons = [
@@ -647,11 +655,11 @@
           setLastUpdate(new Date().toLocaleString());
         } catch (error) {
           console.error('Failed to fetch official rates', error);
-          setRateError(t.rateFetchError);
+          setRateError(translationRef.current.rateFetchError);
         } finally {
           setIsFetchingRates(false);
         }
-      }, [t.rateFetchError]);
+      }, []);
 
       useEffect(() => {
         fetchOfficialRates();
