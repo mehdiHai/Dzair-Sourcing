@@ -142,7 +142,7 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <script type="text/babel">
-    const { useState, useEffect, useCallback, useRef } = React;
+    const { useState, useCallback } = React;
 
     /*
      * Single-file React SPA used as the import-cost calculator.
@@ -264,13 +264,7 @@
         officialRate: 'السعر الرسمي',
         blackMarketRate: 'السعر الموازي',
         lastUpdate: 'آخر تحديث',
-        refreshRates: 'تحديث السعر الرسمي',
-        refreshingRates: 'جارٍ جلب السعر...',
-        refreshBlackRates: 'تحديث سعر السوق الموازي',
-        refreshingBlackRates: 'جاري جلب سعر السوق الموازي...',
-        rateFetchError: 'تعذر جلب السعر الرسمي، حاول مرة أخرى.',
-        blackRateFetchError: 'تعذر جلب سعر السوق الموازي، حاول مرة أخرى.',
-        blackRateSource: 'المصدر: dzsquare.dz (سوق موازية)',
+        manualRateEntry: 'إدخال يدوي (دينار لكل عملة)',
         results: 'تفاصيل التكلفة',
         fobPrice: 'سعر الشراء (FOB)',
         atBlackRate: 'بسعر السوق الموازي',
@@ -330,7 +324,18 @@
         resaleTimelineAfter36: 'بعد 36 شهر: لا يوجد استرجاع للامتياز الجبائي',
         resalePeriodLabel: 'فترة إعادة البيع (قانون المالية 2025)',
         pdfDownload: 'تحميل تقرير PDF مفصل',
-        pdfSubtitle: 'نسخة للطباعة للبنك أو الجمارك أو الزبون'
+        pdfSubtitle: 'نسخة للطباعة للبنك أو الجمارك أو الزبون',
+        terminologyTitle: 'المصطلحات والاختصارات',
+        termCIF: 'CIF',
+        termCIFDesc: 'التكلفة + التأمين + الشحن (القيمة التي تعتمدها الجمارك)',
+        termFOB: 'FOB',
+        termFOBDesc: 'قيمة المركبة بدون نقل أو تأمين',
+        termDD: 'DD',
+        termDDDesc: 'حقوق الجمركة المحسوبة على قيمة CIF',
+        termTCS: 'TCS',
+        termTCSDesc: 'رسم التضامن (3٪ من قيمة CIF)',
+        termTVA: 'TVA',
+        termTVADesc: 'الضريبة على القيمة المضافة بعد DD وTCS'
       },
       fr: {
         title: 'Dzair Sourcing Cars',
@@ -359,13 +364,7 @@
         officialRate: 'Taux Officiel',
         blackMarketRate: 'Taux Parallèle',
         lastUpdate: 'Dernière mise à jour',
-        refreshRates: 'Actualiser les taux officiels',
-        refreshingRates: 'Mise à jour des taux...',
-        refreshBlackRates: 'Actualiser le taux parallèle',
-        refreshingBlackRates: 'Récupération du taux parallèle...',
-        rateFetchError: "Impossible de récupérer les taux officiels, réessayez.",
-        blackRateFetchError: 'Impossible de récupérer le taux parallèle. Réessayez.',
-        blackRateSource: 'Source : dzsquare.dz (marché parallèle)',
+        manualRateEntry: 'Saisie manuelle (DZD par devise)',
         results: 'Détail des Coûts',
         fobPrice: "Prix d'achat (FOB)",
         atBlackRate: 'au taux parallèle',
@@ -425,7 +424,18 @@
         resaleTimelineAfter36: 'Après 36 mois : aucun reversement de l’avantage fiscal',
         resalePeriodLabel: 'Période de revente (Loi de Finances 2025)',
         pdfDownload: 'Télécharger le rapport PDF détaillé',
-        pdfSubtitle: 'Version imprimable pour banque, douane ou client'
+        pdfSubtitle: 'Version imprimable pour banque, douane ou client',
+        terminologyTitle: 'Terminologie & Sigles',
+        termCIF: 'CIF',
+        termCIFDesc: 'Coût + Assurance + Fret (valeur utilisée par la douane)',
+        termFOB: 'FOB',
+        termFOBDesc: 'Valeur du véhicule hors transport et assurance',
+        termDD: 'DD',
+        termDDDesc: 'Droits de Douane calculés sur la valeur CIF',
+        termTCS: 'TCS',
+        termTCSDesc: 'Taxe de solidarité (3 % du CIF)',
+        termTVA: 'TVA',
+        termTVADesc: 'Taxe sur la valeur ajoutée calculée après DD et TCS'
       },
       tz: {
         title: 'Dzair Sourcing Cars',
@@ -454,13 +464,7 @@
         officialRate: 'Azal unṣib',
         blackMarketRate: 'Azal azeggan',
         lastUpdate: 'Aleqqem aneggaru',
-        refreshRates: 'Sleḍ izlan insiben',
-        refreshingRates: 'Asileḍ n izlan...',
-        refreshBlackRates: 'Smiḍi azal azeggan',
-        refreshingBlackRates: 'Anadi n uzal azeggan...',
-        rateFetchError: 'Yegguma ad d-iru izlan insiben, ɛreḍ tikelt nniḍen.',
-        blackRateFetchError: 'Ur nessi ara ad d-nawi azal azeggan. Ɛreḍ tikelt nniḍen.',
-        blackRateSource: 'Aɣbalu : dzsquare.dz (azal azeggan)',
+        manualRateEntry: 'Asekcem awfus (DZD i yal tawacult)',
         results: 'Talɣut n wezwi',
         fobPrice: 'Azal n usɣ (FOB)',
         atBlackRate: 's uzal azeggan',
@@ -520,7 +524,18 @@
         resaleTimelineAfter36: 'Seld 36 ayowr: ulac aɣelsan',
         resalePeriodLabel: 'Talla n uznuzu (Usɣel n Tedrimt 2025)',
         pdfDownload: 'Sider rapport PDF ummuggar',
-        pdfSubtitle: 'Tawsit i usiggez, tabanka neɣ lmerk'
+        pdfSubtitle: 'Tawsit i usiggez, tabanka neɣ lmerk',
+        terminologyTitle: 'Isemaden d yizemlen',
+        termCIF: 'CIF',
+        termCIFDesc: 'Azal + tasertit + asiweḍ i yettuseqdacen sɣur lmerk',
+        termFOB: 'FOB',
+        termFOBDesc: 'Azal n tkerrust war asiweḍ neɣ tasertit',
+        termDD: 'DD',
+        termDDDesc: 'Izerfan n lmerk ittwasenqen ɣef CIF',
+        termTCS: 'TCS',
+        termTCSDesc: 'Tawsit n tiddukla (3% n CIF)',
+        termTVA: 'TVA',
+        termTVADesc: 'TVA tettwasḥebbes seld DD d TCS'
       }
     };
 
@@ -582,12 +597,6 @@
       const [officialEUR, setOfficialEUR] = useState(defaultRates.officialEUR);
       const [blackUSD, setBlackUSD] = useState(defaultRates.blackUSD);
       const [blackEUR, setBlackEUR] = useState(defaultRates.blackEUR);
-      const [officialLastUpdate, setOfficialLastUpdate] = useState('');
-      const [blackLastUpdate, setBlackLastUpdate] = useState('');
-      const [isFetchingOfficialRates, setIsFetchingOfficialRates] = useState(false);
-      const [isFetchingBlackRates, setIsFetchingBlackRates] = useState(false);
-      const [officialRateError, setOfficialRateError] = useState('');
-      const [blackRateError, setBlackRateError] = useState('');
       const [results, setResults] = useState(null);
       const [showResults, setShowResults] = useState(false);
       const [potentialUsedSavings, setPotentialUsedSavings] = useState(0);
@@ -597,17 +606,6 @@
       const [resalePeriod, setResalePeriod] = useState('24_36');
 
       const t = translations[lang];
-      const translationRef = useRef(t);
-
-      useEffect(() => {
-        translationRef.current = translations[lang];
-        if (officialRateError) {
-          setOfficialRateError(translations[lang].rateFetchError);
-        }
-        if (blackRateError) {
-          setBlackRateError(translations[lang].blackRateFetchError);
-        }
-      }, [lang, officialRateError, blackRateError]);
       const isRTL = lang === 'ar';
 
       const engineButtons = [
@@ -617,227 +615,6 @@
         { value: 'hybridSmall', label: translations[lang].hybridSmall, rateUsed: '19.62%' },
         { value: 'hybridLarge', label: translations[lang].hybridLarge, rateUsed: '121.06%' }
       ];
-
-      const fetchOfficialRates = useCallback(async () => {
-        setIsFetchingOfficialRates(true);
-        setOfficialRateError('');
-
-        const sourceUrl = 'https://www.bank-of-algeria.dz/taux-de-change-journalier/';
-        const fallbacks = [
-          sourceUrl,
-          `https://api.allorigins.win/raw?url=${encodeURIComponent(sourceUrl)}`,
-          `https://cors.isomorphic-git.org/${sourceUrl}`
-        ];
-
-        const parseOfficialRates = (html) => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const normalizeText = (str = '') => str.replace(/\s+/g, ' ').trim();
-          const uppercase = (str = '') => normalizeText(str).toUpperCase();
-
-          const matchCodes = (label, codes) => codes.some((code) => label.includes(code));
-
-          const parseTable = (table) => {
-            const headers = Array.from(table.querySelectorAll('thead th, tr th'));
-            const sellIndex = headers.findIndex((cell) => /VENTE|SELL/i.test(cell.textContent || ''));
-
-            let usd = null;
-            let eur = null;
-
-            const rows = Array.from(table.querySelectorAll('tbody tr, tr')).filter((row) =>
-              row.querySelectorAll('td').length > 0
-            );
-
-            rows.forEach((row) => {
-              const cells = Array.from(row.querySelectorAll('td'));
-              if (!cells.length) return;
-
-              const label = uppercase(cells[0].textContent);
-              const sellCell =
-                sellIndex >= 0 && cells[sellIndex]
-                  ? cells[sellIndex]
-                  : cells.length >= 3
-                    ? cells[2]
-                    : cells[cells.length - 1];
-
-              const rawValue = normalizeText(sellCell?.textContent || '').replace(',', '.');
-              const value = rawValue ? parseFloat(rawValue) : null;
-
-              if (value && matchCodes(label, ['USD', 'DOLLAR'])) {
-                usd = value;
-              }
-
-              if (value && matchCodes(label, ['EUR', 'EURO'])) {
-                eur = value;
-              }
-            });
-
-            return { usd, eur };
-          };
-
-          for (const table of Array.from(doc.querySelectorAll('table'))) {
-            const result = parseTable(table);
-            if (result.usd || result.eur) return result;
-          }
-
-          const blob = uppercase(doc.body?.textContent || '');
-          const usdMatch = blob.match(/USD[^\n]*VENTE[^0-9]*([0-9]+(?:[.,][0-9]+)?)/i);
-          const eurMatch = blob.match(/EUR[^\n]*VENTE[^0-9]*([0-9]+(?:[.,][0-9]+)?)/i);
-
-          return {
-            usd: usdMatch ? parseFloat(usdMatch[1].replace(',', '.')) : null,
-            eur: eurMatch ? parseFloat(eurMatch[1].replace(',', '.')) : null
-          };
-        };
-
-        try {
-          for (const url of fallbacks) {
-            try {
-              const response = await fetch(url, { cache: 'no-cache' });
-              if (!response.ok) continue;
-
-              const html = await response.text();
-              const { usd, eur } = parseOfficialRates(html);
-
-              let updated = false;
-
-              if (usd) {
-                setOfficialUSD(Number(usd.toFixed(3)));
-                updated = true;
-              }
-
-              if (eur) {
-                setOfficialEUR(Number(eur.toFixed(3)));
-                updated = true;
-              }
-
-              if (updated) {
-                setOfficialLastUpdate(new Date().toLocaleString());
-                setIsFetchingOfficialRates(false);
-                return;
-              }
-            } catch (innerError) {
-              console.warn('Retrying with next official source', innerError);
-            }
-          }
-
-          throw new Error('No official rates parsed');
-        } catch (error) {
-          console.error('Failed to fetch official rates', error);
-          setOfficialRateError(translationRef.current.rateFetchError);
-        } finally {
-          setIsFetchingOfficialRates(false);
-        }
-      }, []);
-
-      const fetchBlackMarketRates = useCallback(async () => {
-        setIsFetchingBlackRates(true);
-        setBlackRateError('');
-
-        const primarySource = 'http://www.forexalgerie.com';
-        const fallbacks = [
-          primarySource,
-          'https://www.forexalgerie.com',
-          `https://api.allorigins.win/raw?url=${encodeURIComponent(primarySource)}`,
-          `https://cors.isomorphic-git.org/${primarySource}`
-        ];
-
-        const parseRate = (html, code) => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const normalizeText = (str = '') => str.replace(/\s+/g, ' ').trim();
-          const uppercase = (str = '') => normalizeText(str).toUpperCase();
-          const codes = code === 'USD' ? ['USD', 'DOLLAR'] : ['EUR', 'EURO'];
-
-          const parseTable = (table) => {
-            const headers = Array.from(table.querySelectorAll('thead th, tr th'));
-            const sellIndex = headers.findIndex((cell) => /VENTE|SELL/i.test(cell.textContent || ''));
-
-            const rows = Array.from(table.querySelectorAll('tbody tr, tr')).filter((row) =>
-              row.querySelectorAll('td').length > 0
-            );
-
-            for (const row of rows) {
-              const cells = Array.from(row.querySelectorAll('td'));
-              if (!cells.length) continue;
-
-              const label = uppercase(cells[0].textContent);
-              if (!codes.some((c) => label.includes(c))) continue;
-
-              const sellCell =
-                sellIndex >= 0 && cells[sellIndex]
-                  ? cells[sellIndex]
-                  : cells.length >= 3
-                    ? cells[2]
-                    : cells[cells.length - 1];
-
-              const raw = normalizeText(sellCell?.textContent || '').replace(',', '.');
-              const value = raw ? parseFloat(raw) : null;
-              if (value) return value;
-            }
-
-            return null;
-          };
-
-          for (const table of Array.from(doc.querySelectorAll('table'))) {
-            const value = parseTable(table);
-            if (value) return value;
-          }
-
-          const blob = normalizeText(doc.body?.textContent || '');
-          const regex = new RegExp(
-            `${codes.join('|')}[^\n]*VENTE[^0-9]*([0-9]+(?:[.,][0-9]+)?)`,
-            'i'
-          );
-          const match = blob.match(regex);
-          return match ? parseFloat(match[1].replace(',', '.')) : null;
-        };
-
-        try {
-          for (const url of fallbacks) {
-            try {
-              const response = await fetch(url, { cache: 'no-cache' });
-              if (!response.ok) continue;
-              const html = await response.text();
-
-              const usdRate = parseRate(html, 'USD');
-              const eurRate = parseRate(html, 'EUR');
-
-              let updated = false;
-
-              if (usdRate) {
-                setBlackUSD(Number(usdRate.toFixed(3)));
-                updated = true;
-              }
-
-              if (eurRate) {
-                setBlackEUR(Number(eurRate.toFixed(3)));
-                updated = true;
-              }
-
-              if (updated) {
-                setBlackLastUpdate(new Date().toLocaleString());
-                setIsFetchingBlackRates(false);
-                return;
-              }
-            } catch (innerError) {
-              console.warn('Retrying with next forexalgerie source', innerError);
-            }
-          }
-
-          throw new Error('No black market rates parsed');
-        } catch (error) {
-          console.error('Failed to fetch black market rates', error);
-          setBlackRateError(translationRef.current.blackRateFetchError);
-        } finally {
-          setIsFetchingBlackRates(false);
-        }
-      }, []);
-
-      useEffect(() => {
-        fetchOfficialRates();
-        fetchBlackMarketRates();
-      }, [fetchOfficialRates, fetchBlackMarketRates]);
 
       const calculate = useCallback(() => {
         // Collect numeric inputs with safe defaults to avoid NaN propagation
@@ -1285,6 +1062,72 @@
                   </div>
                 </div>
               </div>
+
+              <div className="grid md:grid-cols-2 gap-3 text-xs md:text-sm mt-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 mt-1" />
+                    <div>
+                      <div className="font-semibold text-amber-800">{t.blackMarketRate}</div>
+                      <p className="text-[11px] text-amber-800">{t.manualRateEntry}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[11px] text-amber-800 mb-1">USD/DZD</label>
+                      <input
+                        type="number"
+                        value={blackUSD}
+                        min="0"
+                        onChange={(e) => setBlackUSD(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-amber-800 mb-1">EUR/DZD</label>
+                      <input
+                        type="number"
+                        value={blackEUR}
+                        min="0"
+                        onChange={(e) => setBlackEUR(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-500 mt-1" />
+                    <div>
+                      <div className="font-semibold text-blue-800">{t.officialRate}</div>
+                      <p className="text-[11px] text-blue-800">{t.manualRateEntry}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[11px] text-blue-800 mb-1">USD/DZD</label>
+                      <input
+                        type="number"
+                        value={officialUSD}
+                        min="0"
+                        onChange={(e) => setOfficialUSD(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-blue-800 mb-1">EUR/DZD</label>
+                      <input
+                        type="number"
+                        value={officialEUR}
+                        min="0"
+                        onChange={(e) => setOfficialEUR(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1473,121 +1316,27 @@
                   </div>
                 </div>
 
-                {/* Exchange rates */}
+                {/* Terminology */}
                 <div className="card">
                   <h2 className="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
                     <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
-                      <IconExchange className="w-4 h-4" />
+                      <IconInfo className="w-4 h-4" />
                     </span>
-                    {t.exchangeRates}
+                    {t.terminologyTitle}
                   </h2>
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    {/* Parallel */}
-                    <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-semibold text-amber-800 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-amber-500" />
-                          {t.blackMarketRate}
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={fetchBlackMarketRates}
-                          disabled={isFetchingBlackRates}
-                          className={`text-[10px] px-2 py-1 rounded border font-medium transition ${
-                            isFetchingBlackRates
-                              ? 'bg-amber-100 border-amber-200 text-amber-600 cursor-wait'
-                              : 'bg-white border-amber-300 text-amber-700 hover:bg-amber-600 hover:text-white'
-                          }`}
-                        >
-                          {isFetchingBlackRates ? t.refreshingBlackRates : t.refreshBlackRates}
-                        </button>
+                  <div className="space-y-2 text-xs md:text-sm">
+                    {[
+                      { label: t.termCIF, desc: t.termCIFDesc, color: 'text-blue-700 bg-blue-50 border-blue-100' },
+                      { label: t.termFOB, desc: t.termFOBDesc, color: 'text-amber-700 bg-amber-50 border-amber-100' },
+                      { label: t.termDD, desc: t.termDDDesc, color: 'text-green-700 bg-green-50 border-green-100' },
+                      { label: t.termTCS, desc: t.termTCSDesc, color: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
+                      { label: t.termTVA, desc: t.termTVADesc, color: 'text-purple-700 bg-purple-50 border-purple-100' }
+                    ].map(({ label, desc, color }) => (
+                      <div key={label} className={`border rounded-md p-2 ${color}`}>
+                        <div className="font-semibold">{label}</div>
+                        <div className="text-[11px] md:text-xs mt-1 leading-snug">{desc}</div>
                       </div>
-                      <div className="space-y-2">
-                        <div>
-                          <label className="block text-[11px] text-amber-800 mb-1">USD/DZD</label>
-                          <input
-                            type="number"
-                            value={blackUSD}
-                            min="0"
-                            onChange={(e) => setBlackUSD(parseFloat(e.target.value) || 0)}
-                            className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] text-amber-800 mb-1">EUR/DZD</label>
-                          <input
-                            type="number"
-                            value={blackEUR}
-                            min="0"
-                            onChange={(e) => setBlackEUR(parseFloat(e.target.value) || 0)}
-                            className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-1 mt-2">
-                        <p className="text-[11px] text-amber-800">{t.blackRateSource}</p>
-                        <p className="text-[11px] text-amber-800">
-                          {t.lastUpdate}: {blackLastUpdate || '—'}
-                        </p>
-                        {blackRateError && (
-                          <p className="text-[11px] text-red-700">{blackRateError}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Official */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-semibold text-blue-800 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-blue-500" />
-                          {t.officialRate}
-                          </h3>
-                          <button
-                            type="button"
-                            onClick={fetchOfficialRates}
-                          disabled={isFetchingOfficialRates}
-                            className={`text-[10px] px-2 py-1 rounded border font-medium transition ${
-                            isFetchingOfficialRates
-                              ? 'bg-blue-100 border-blue-200 text-blue-500 cursor-wait'
-                              : 'bg-white border-blue-300 text-blue-700 hover:bg-blue-600 hover:text-white'
-                          }`}
-                          >
-                          {isFetchingOfficialRates ? t.refreshingRates : t.refreshRates}
-                          </button>
-                      </div>
-                      <div className="space-y-2">
-                        <div>
-                          <label className="block text-[11px] text-blue-800 mb-1">USD/DZD</label>
-                          <input
-                            type="number"
-                            value={officialUSD}
-                            min="0"
-                            onChange={(e) => setOfficialUSD(parseFloat(e.target.value) || 0)}
-                            className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] text-blue-800 mb-1">EUR/DZD</label>
-                          <input
-                            type="number"
-                            value={officialEUR}
-                            min="0"
-                            onChange={(e) => setOfficialEUR(parseFloat(e.target.value) || 0)}
-                            className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-1 mt-2">
-                        <p className="text-[11px] text-blue-700">
-                          {t.lastUpdate}: {officialLastUpdate || '—'}
-                        </p>
-                        {officialRateError && (
-                          <p className="text-[11px] text-red-700">
-                            {officialRateError}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>
