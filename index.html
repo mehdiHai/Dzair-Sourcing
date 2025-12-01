@@ -142,7 +142,19 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <script type="text/babel">
-    const { useState, useEffect, useCallback } = React;
+    const { useState, useCallback, useEffect } = React;
+
+    /*
+     * Single-file React SPA used as the import-cost calculator.
+     * Structure overview:
+     *  - Tailwind utility classes for styling plus a handful of custom classes above.
+     *  - Inline SVG icons for small UI elements (keeps everything self-contained).
+     *  - Translations object powering FR / AR / ES / EN / Kabyle labels and paragraphs.
+     *  - Tax configuration constants (used vs. new rates, DD / TCS / TVA values).
+     *  - Utility helpers for currency formatting + safe number parsing.
+     *  - The DzairCalculator component manages all state and derived values, then renders
+     *    the full layout: inputs, results, resale modeling, and PDF export CTA.
+     */
 
     /* ------------ Icons (inline SVG) ------------ */
 
@@ -252,6 +264,7 @@
         officialRate: 'السعر الرسمي',
         blackMarketRate: 'السعر الموازي',
         lastUpdate: 'آخر تحديث',
+        manualRateEntry: 'إدخال يدوي (دينار لكل عملة)',
         results: 'تفاصيل التكلفة',
         fobPrice: 'سعر الشراء (FOB)',
         atBlackRate: 'بسعر السوق الموازي',
@@ -311,7 +324,18 @@
         resaleTimelineAfter36: 'بعد 36 شهر: لا يوجد استرجاع للامتياز الجبائي',
         resalePeriodLabel: 'فترة إعادة البيع (قانون المالية 2025)',
         pdfDownload: 'تحميل تقرير PDF مفصل',
-        pdfSubtitle: 'نسخة للطباعة للبنك أو الجمارك أو الزبون'
+        pdfSubtitle: 'نسخة للطباعة للبنك أو الجمارك أو الزبون',
+        terminologyTitle: 'المصطلحات والاختصارات',
+        termCIF: 'CIF',
+        termCIFDesc: 'التكلفة + التأمين + الشحن (القيمة التي تعتمدها الجمارك)',
+        termFOB: 'FOB',
+        termFOBDesc: 'قيمة المركبة بدون نقل أو تأمين',
+        termDD: 'DD',
+        termDDDesc: 'حقوق الجمركة المحسوبة على قيمة CIF',
+        termTCS: 'TCS',
+        termTCSDesc: 'رسم التضامن (3٪ من قيمة CIF)',
+        termTVA: 'TVA',
+        termTVADesc: 'الضريبة على القيمة المضافة بعد DD وTCS'
       },
       fr: {
         title: 'Dzair Sourcing Cars',
@@ -340,6 +364,7 @@
         officialRate: 'Taux Officiel',
         blackMarketRate: 'Taux Parallèle',
         lastUpdate: 'Dernière mise à jour',
+        manualRateEntry: 'Saisie manuelle (DZD par devise)',
         results: 'Détail des Coûts',
         fobPrice: "Prix d'achat (FOB)",
         atBlackRate: 'au taux parallèle',
@@ -399,7 +424,18 @@
         resaleTimelineAfter36: 'Après 36 mois : aucun reversement de l’avantage fiscal',
         resalePeriodLabel: 'Période de revente (Loi de Finances 2025)',
         pdfDownload: 'Télécharger le rapport PDF détaillé',
-        pdfSubtitle: 'Version imprimable pour banque, douane ou client'
+        pdfSubtitle: 'Version imprimable pour banque, douane ou client',
+        terminologyTitle: 'Terminologie & Sigles',
+        termCIF: 'CIF',
+        termCIFDesc: 'Coût + Assurance + Fret (valeur utilisée par la douane)',
+        termFOB: 'FOB',
+        termFOBDesc: 'Valeur du véhicule hors transport et assurance',
+        termDD: 'DD',
+        termDDDesc: 'Droits de Douane calculés sur la valeur CIF',
+        termTCS: 'TCS',
+        termTCSDesc: 'Taxe de solidarité (3 % du CIF)',
+        termTVA: 'TVA',
+        termTVADesc: 'Taxe sur la valeur ajoutée calculée après DD et TCS'
       },
       tz: {
         title: 'Dzair Sourcing Cars',
@@ -428,6 +464,7 @@
         officialRate: 'Azal unṣib',
         blackMarketRate: 'Azal azeggan',
         lastUpdate: 'Aleqqem aneggaru',
+        manualRateEntry: 'Asekcem awfus (DZD i yal tawacult)',
         results: 'Talɣut n wezwi',
         fobPrice: 'Azal n usɣ (FOB)',
         atBlackRate: 's uzal azeggan',
@@ -487,7 +524,18 @@
         resaleTimelineAfter36: 'Seld 36 ayowr: ulac aɣelsan',
         resalePeriodLabel: 'Talla n uznuzu (Usɣel n Tedrimt 2025)',
         pdfDownload: 'Sider rapport PDF ummuggar',
-        pdfSubtitle: 'Tawsit i usiggez, tabanka neɣ lmerk'
+        pdfSubtitle: 'Tawsit i usiggez, tabanka neɣ lmerk',
+        terminologyTitle: 'Isemaden d yizemlen',
+        termCIF: 'CIF',
+        termCIFDesc: 'Azal + tasertit + asiweḍ i yettuseqdacen sɣur lmerk',
+        termFOB: 'FOB',
+        termFOBDesc: 'Azal n tkerrust war asiweḍ neɣ tasertit',
+        termDD: 'DD',
+        termDDDesc: 'Izerfan n lmerk ittwasenqen ɣef CIF',
+        termTCS: 'TCS',
+        termTCSDesc: 'Tawsit n tiddukla (3% n CIF)',
+        termTVA: 'TVA',
+        termTVADesc: 'TVA tettwasḥebbes seld DD d TCS'
       }
     };
 
@@ -525,6 +573,8 @@
     const formatNumber = (num) =>
       new Intl.NumberFormat('fr-DZ').format(Math.round(num || 0));
 
+    const toNumber = (value) => parseFloat(value) || 0;
+
     const formatCurrency = (num, curr = 'DZD') => {
       if (curr === 'DZD') return `${formatNumber(num)} DZD`;
       const symbol = curr === 'USD' ? '$' : '€';
@@ -547,7 +597,6 @@
       const [officialEUR, setOfficialEUR] = useState(defaultRates.officialEUR);
       const [blackUSD, setBlackUSD] = useState(defaultRates.blackUSD);
       const [blackEUR, setBlackEUR] = useState(defaultRates.blackEUR);
-      const [lastUpdate] = useState(new Date().toLocaleString());
       const [results, setResults] = useState(null);
       const [showResults, setShowResults] = useState(false);
       const [potentialUsedSavings, setPotentialUsedSavings] = useState(0);
@@ -568,11 +617,12 @@
       ];
 
       const calculate = useCallback(() => {
-        const price = parseFloat(carPrice) || 0;
-        const freight = parseFloat(freightInsurance) || 0;
-        const inspectionFee = parseFloat(inspection) || 0;
-        const docFee = parseFloat(documentation) || 0;
-        const portFee = parseFloat(portBroker) || 0;
+        // Collect numeric inputs with safe defaults to avoid NaN propagation
+        const price = toNumber(carPrice);
+        const freight = toNumber(freightInsurance);
+        const inspectionFee = toNumber(inspection);
+        const docFee = toNumber(documentation);
+        const portFee = toNumber(portBroker);
 
         const blackRate = currency === 'USD' ? blackUSD : blackEUR;
         const officialRate = currency === 'USD' ? officialUSD : officialEUR;
@@ -584,6 +634,7 @@
           return;
         }
 
+        // Convert to DZD using chosen rates; customs (CIF) must use the official rate
         const fobDZD = price * blackRate;
         const freightDZD = freight * blackRate;
         const localExpenses = inspectionFee + docFee + portFee;
@@ -597,6 +648,7 @@
         let taxAdvantageRate = 0;
 
         if (vehicleAge === 'new') {
+          // New vehicles: DD + TCS + TVA + vignette applied to CIF base
           const ddRate = newCarDdRates[engineType] || 0;
           const dd = cifCustoms * (ddRate / 100);
           const tcs = cifCustoms * (TAX_TCS / 100);
@@ -758,139 +810,155 @@
 
         const generate = (logoImg) => {
           const doc = new jsPDF('p', 'mm', 'a4');
-          const marginX = 15;
-          let y = 15;
+          doc.setFont('helvetica', '');
+          const marginX = 16;
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const contentWidth = pageWidth - marginX * 2;
+          let y = 18;
+
+          const ensureSpace = (needed = 0) => {
+            const bottomMargin = 18;
+            if (y + needed > pageHeight - bottomMargin) {
+              doc.addPage();
+              y = 18;
+            }
+          };
 
           const engineLabel = (engineButtons.find(b => b.value === engineType)?.label) || engineType;
           const vehicleAgeLabel = vehicleAge === 'new' ? t.brandNew : t.usedUnder3;
 
-          // Header avec logo (Option B – taille moyenne)
-          const logoSize = 14;
+          const addSectionTitle = (index, label) => {
+            ensureSpace(14);
+            doc.setFillColor(0, 98, 51);
+            doc.setTextColor(255);
+            doc.roundedRect(marginX, y, contentWidth, 8, 2, 2, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.text(`${index}. ${label}`, marginX + 3, y + 5);
+            y += 12;
+            doc.setFont('helvetica', '');
+            doc.setTextColor(30);
+          };
+
+          const addKeyValueRow = (label, value) => {
+            doc.setFont('helvetica', '');
+            doc.setFontSize(10);
+            const lines = doc.splitTextToSize(`• ${label}`, contentWidth * 0.6);
+            const rowHeight = Math.max(lines.length * 4.5, 6);
+            ensureSpace(rowHeight + 4);
+            doc.text(lines, marginX, y + 4);
+            doc.text(value, pageWidth - marginX, y + 4, { align: 'right' });
+            y += rowHeight + 2;
+          };
+
+          const addParagraph = (text, color = [60, 60, 60]) => {
+            doc.setFont('helvetica', '');
+            doc.setFontSize(9);
+            doc.setTextColor(...color);
+            const lines = doc.splitTextToSize(text, contentWidth);
+            ensureSpace(lines.length * 4.2 + 4);
+            doc.text(lines, marginX, y);
+            y += lines.length * 4.2 + 2;
+            doc.setTextColor(30);
+          };
+
+          // Header avec logo (centré et aéré)
+          const logoSize = 16;
           if (logoImg) {
             try {
-              doc.addImage(logoImg, 'PNG', marginX, y - 1, logoSize, logoSize);
+              doc.addImage(logoImg, 'PNG', marginX, y - 4, logoSize, logoSize);
             } catch (e) {
               // si souci avec l'image, on continue sans casser le PDF
             }
           }
 
+          doc.setFont('helvetica', 'bold');
           doc.setFontSize(16);
           doc.setTextColor(0, 98, 51);
-          doc.text(t.title, marginX + logoSize + 6, y + 4);
+          doc.text(t.title, marginX + logoSize + 6, y + 2);
+          doc.setFont('helvetica', '');
           doc.setFontSize(10);
           doc.setTextColor(90);
-          doc.text(t.subtitle, marginX + logoSize + 6, y + 9);
+          doc.text(t.subtitle, marginX + logoSize + 6, y + 8);
 
-          y += 20;
+          y += 18;
 
-          // Encadré titre
-          doc.setDrawColor(0, 98, 51);
-          doc.setLineWidth(0.4);
-          doc.roundedRect(marginX, y - 10, 180 - marginX * 0.5, 10, 2, 2);
+          addSectionTitle(1, 'Résumé du véhicule et de l’opération');
+          addKeyValueRow(t.vehicleAge, vehicleAgeLabel);
+          addKeyValueRow(t.engineType, engineLabel);
+          addKeyValueRow(t.carPrice, `${formatCurrency(results.price, currency)} (${currency})`);
+          addKeyValueRow(t.freightCost, `${formatCurrency(results.freight, currency)} (${currency})`);
 
-          // Section: Basic info
-          doc.setFontSize(12);
-          doc.setTextColor(30);
-          doc.text('1. Résumé du véhicule et de l’opération', marginX, y + 2);
-          y += 8;
-          doc.setFontSize(10);
-          doc.text(`• ${t.vehicleAge}: ${vehicleAgeLabel}`, marginX, y); y += 5;
-          doc.text(`• ${t.engineType}: ${engineLabel}`, marginX, y); y += 5;
-          doc.text(`• ${t.carPrice}: ${formatCurrency(results.price, currency)} (${currency})`, marginX, y); y += 5;
-          doc.text(`• ${t.freightCost}: ${formatCurrency(results.freight, currency)} (${currency})`, marginX, y); y += 8;
-
-          // Section: Cost breakdown
-          doc.setFontSize(12);
-          doc.setTextColor(30);
-          doc.text('2. Coût global détaillé (en DZD)', marginX, y);
-          y += 6;
-          doc.setFontSize(10);
-
-          const lineItems = [
+          addSectionTitle(2, 'Coût global détaillé (en DZD)');
+          [
             { label: t.fobPrice, value: formatCurrency(results.fobDZD) },
             { label: t.freightCost, value: formatCurrency(results.freightDZD) },
             { label: t.otherFees, value: formatCurrency(results.localExpenses) },
             { label: t.customsCIF, value: formatCurrency(results.cifCustoms) },
             { label: t.customsRights, value: formatCurrency(results.totalTax) },
-          ];
-          if (results.newCarTaxAmount > 0) {
-            lineItems.push({ label: t.newCarTax, value: formatCurrency(results.newCarTaxAmount) });
-          }
-          lineItems.push({ label: t.totalCost, value: formatCurrency(results.total) });
+            ...(results.newCarTaxAmount > 0 ? [{ label: t.newCarTax, value: formatCurrency(results.newCarTaxAmount) }] : []),
+            { label: t.totalCost, value: formatCurrency(results.total) },
+          ].forEach(item => addKeyValueRow(item.label, item.value));
 
-          lineItems.forEach(item => {
-            doc.text(`• ${item.label}`, marginX, y);
-            doc.text(item.value, 200 - marginX, y, { align: 'right' });
-            y += 5;
-          });
-
-          y += 4;
           doc.setFontSize(9);
           doc.setTextColor(110);
+          ensureSpace(12);
           doc.text(
             `${t.blackMarketRate}: ${formatNumber(results.blackRate)} DZD/${currency}  |  ${t.officialRate}: ${formatNumber(results.officialRate)} DZD/${currency}`,
             marginX,
             y
           );
-          y += 8;
+          y += 10;
 
-          // Section: Used car tax advantage
           if (vehicleAge === 'used' && resaleInfo && results.taxAdvantageAmount > 0) {
-            doc.setFontSize(12);
-            doc.setTextColor(30);
-            doc.text('3. Avantage fiscal sur véhicule d’occasion', marginX, y);
-            y += 6;
-            doc.setFontSize(10);
-            doc.text(`• ${t.resaleAdvantageAmount}`, marginX, y);
-            doc.text(formatCurrency(resaleInfo.advantage), 200 - marginX, y, { align: 'right' });
-            y += 5;
-            doc.text(`• ${t.baseRate}: ${formatNumber(results.taxes.baseRate)}%`, marginX, y); y += 5;
-            doc.text(`• ${t.finalRate}: ${formatNumber(results.taxes.finalRate)}%`, marginX, y); y += 8;
+            addSectionTitle(3, 'Avantage fiscal sur véhicule d’occasion');
+            addKeyValueRow(t.resaleAdvantageAmount, formatCurrency(resaleInfo.advantage));
+            addKeyValueRow(`${t.baseRate}`, `${formatNumber(results.taxes.baseRate)}%`);
+            addKeyValueRow(`${t.finalRate}`, `${formatNumber(results.taxes.finalRate)}%`);
           }
 
-          // Section: Loi de Finances 2025 – Revente
           if (vehicleAge === 'used' && resaleInfo) {
-            doc.setFontSize(12);
-            doc.setTextColor(30);
-            doc.text('4. Loi de Finances 2025 – Revente & reversement de l’avantage fiscal', marginX, y);
-            y += 6;
-            doc.setFontSize(10);
+            addSectionTitle(4, 'Loi de Finances 2025 – Revente & reversement de l’avantage fiscal');
 
-            doc.text(`• ${t.resalePeriodLabel}:`, marginX, y);
-            doc.text(resalePeriodLabel, marginX + 4, y + 5);
-            y += 10;
-
-            doc.text(`• ${t.resaleRefundAmount}`, marginX, y);
-            doc.text(formatCurrency(resaleInfo.refund), 200 - marginX, y, { align: 'right' });
-            y += 5;
+            addKeyValueRow(t.resalePeriodLabel, resalePeriodLabel);
+            addKeyValueRow(t.resaleRefundAmount, formatCurrency(resaleInfo.refund));
             if (resaleInfo.keep > 0) {
-              doc.text(`• ${t.resaleSavedLabel}`, marginX, y);
-              doc.text(formatCurrency(resaleInfo.keep), 200 - marginX, y, { align: 'right' });
-              y += 5;
+              addKeyValueRow(t.resaleSavedLabel, formatCurrency(resaleInfo.keep));
             }
 
-            y += 3;
+            doc.setFontSize(10);
             doc.setTextColor(180, 40, 40);
-            doc.text(`⚠ ${t.resaleRiskTitle}`, marginX, y); y += 5;
-            doc.setFontSize(9);
-            doc.text(resaleRiskText, marginX, y); y += 8;
+            ensureSpace(14);
+            doc.text(`⚠ ${t.resaleRiskTitle}`, marginX, y);
+            y += 5;
+            addParagraph(resaleRiskText, [160, 40, 40]);
 
-            doc.setTextColor(90);
             doc.setFontSize(9);
-            doc.text(t.resaleTimelineTitle, marginX, y); y += 5;
-            doc.text(`• ${t.resaleTimeline0_12}`, marginX, y); y += 4;
-            doc.text(`• ${t.resaleTimeline12_24}`, marginX, y); y += 4;
-            doc.text(`• ${t.resaleTimeline24_36}`, marginX, y); y += 4;
-            doc.text(`• ${t.resaleTimelineAfter36}`, marginX, y); y += 8;
+            doc.setTextColor(80);
+            ensureSpace(26);
+            doc.text(t.resaleTimelineTitle, marginX, y);
+            y += 5;
+            [
+              t.resaleTimeline0_12,
+              t.resaleTimeline12_24,
+              t.resaleTimeline24_36,
+              t.resaleTimelineAfter36,
+            ].forEach(line => {
+              doc.text(`• ${line}`, marginX, y);
+              y += 4;
+            });
+            y += 4;
+            doc.setTextColor(30);
           }
 
           // Legal refs footer
           doc.setDrawColor(200);
-          doc.line(marginX, 280, 200 - marginX, 280);
+          doc.line(marginX, 280, pageWidth - marginX, 280);
           doc.setFontSize(8);
           doc.setTextColor(120);
           doc.text(`${t.legalRef}: ${t.decree}; ${t.article}`, marginX, 285);
-          doc.text('https://www.douane.gov.dz', 200 - marginX, 285, { align: 'right' });
+          doc.text('https://www.douane.gov.dz', pageWidth - marginX, 285, { align: 'right' });
 
           doc.save('Dzair_Sourcing_Cars_Report.pdf');
         };
@@ -991,6 +1059,72 @@
                     <p className="text-blue-800 mt-1">
                       {t.officialInfo}
                     </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-3 text-xs md:text-sm mt-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 mt-1" />
+                    <div>
+                      <div className="font-semibold text-amber-800">{t.blackMarketRate}</div>
+                      <p className="text-[11px] text-amber-800">{t.manualRateEntry}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[11px] text-amber-800 mb-1">USD/DZD</label>
+                      <input
+                        type="number"
+                        value={blackUSD}
+                        min="0"
+                        onChange={(e) => setBlackUSD(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-amber-800 mb-1">EUR/DZD</label>
+                      <input
+                        type="number"
+                        value={blackEUR}
+                        min="0"
+                        onChange={(e) => setBlackEUR(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-500 mt-1" />
+                    <div>
+                      <div className="font-semibold text-blue-800">{t.officialRate}</div>
+                      <p className="text-[11px] text-blue-800">{t.manualRateEntry}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[11px] text-blue-800 mb-1">USD/DZD</label>
+                      <input
+                        type="number"
+                        value={officialUSD}
+                        min="0"
+                        onChange={(e) => setOfficialUSD(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-blue-800 mb-1">EUR/DZD</label>
+                      <input
+                        type="number"
+                        value={officialEUR}
+                        min="0"
+                        onChange={(e) => setOfficialEUR(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1182,77 +1316,27 @@
                   </div>
                 </div>
 
-                {/* Exchange rates */}
+                {/* Terminology */}
                 <div className="card">
                   <h2 className="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
                     <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
-                      <IconExchange className="w-4 h-4" />
+                      <IconInfo className="w-4 h-4" />
                     </span>
-                    {t.exchangeRates}
+                    {t.terminologyTitle}
                   </h2>
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    {/* Parallel */}
-                    <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
-                      <h3 className="font-semibold text-amber-800 mb-2 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-500" />
-                        {t.blackMarketRate}
-                      </h3>
-                      <div className="space-y-2">
-                        <div>
-                          <label className="block text-[11px] text-amber-800 mb-1">USD/DZD</label>
-                          <input
-                            type="number"
-                            value={blackUSD}
-                            min="0"
-                            onChange={(e) => setBlackUSD(parseFloat(e.target.value) || 0)}
-                            className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] text-amber-800 mb-1">EUR/DZD</label>
-                          <input
-                            type="number"
-                            value={blackEUR}
-                            min="0"
-                            onChange={(e) => setBlackEUR(parseFloat(e.target.value) || 0)}
-                            className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
-                          />
-                        </div>
+                  <div className="space-y-2 text-xs md:text-sm">
+                    {[
+                      { label: t.termCIF, desc: t.termCIFDesc, color: 'text-blue-700 bg-blue-50 border-blue-100' },
+                      { label: t.termFOB, desc: t.termFOBDesc, color: 'text-amber-700 bg-amber-50 border-amber-100' },
+                      { label: t.termDD, desc: t.termDDDesc, color: 'text-green-700 bg-green-50 border-green-100' },
+                      { label: t.termTCS, desc: t.termTCSDesc, color: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
+                      { label: t.termTVA, desc: t.termTVADesc, color: 'text-purple-700 bg-purple-50 border-purple-100' }
+                    ].map(({ label, desc, color }) => (
+                      <div key={label} className={`border rounded-md p-2 ${color}`}>
+                        <div className="font-semibold">{label}</div>
+                        <div className="text-[11px] md:text-xs mt-1 leading-snug">{desc}</div>
                       </div>
-                    </div>
-
-                    {/* Official */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                      <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-blue-500" />
-                        {t.officialRate}
-                      </h3>
-                      <div className="space-y-2">
-                        <div>
-                          <label className="block text-[11px] text-blue-800 mb-1">USD/DZD</label>
-                          <input
-                            type="number"
-                            value={officialUSD}
-                            min="0"
-                            onChange={(e) => setOfficialUSD(parseFloat(e.target.value) || 0)}
-                            className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] text-blue-800 mb-1">EUR/DZD</label>
-                          <input
-                            type="number"
-                            value={officialEUR}
-                            min="0"
-                            onChange={(e) => setOfficialEUR(parseFloat(e.target.value) || 0)}
-                            className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
-                          />
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-blue-700 mt-2">
-                        {t.lastUpdate}: {lastUpdate}
-                      </p>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>
