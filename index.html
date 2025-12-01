@@ -618,173 +618,226 @@
         { value: 'hybridLarge', label: translations[lang].hybridLarge, rateUsed: '121.06%' }
       ];
 
-        const fetchOfficialRates = useCallback(async () => {
-          setIsFetchingOfficialRates(true);
-          setOfficialRateError('');
+      const fetchOfficialRates = useCallback(async () => {
+        setIsFetchingOfficialRates(true);
+        setOfficialRateError('');
 
-          const sourceUrl = 'https://alces.douane.gov.dz/main';
-          const fallbacks = [
-            sourceUrl,
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(sourceUrl)}`,
-            `https://cors.isomorphic-git.org/${sourceUrl}`
-          ];
+        const sourceUrl = 'https://www.bank-of-algeria.dz/taux-de-change-journalier/';
+        const fallbacks = [
+          sourceUrl,
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(sourceUrl)}`,
+          `https://cors.isomorphic-git.org/${sourceUrl}`
+        ];
 
-          const parseOfficialRates = (html) => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const normalizeText = (str = '') => str.replace(/\s+/g, ' ').trim();
-            const cells = Array.from(doc.querySelectorAll('td, th'));
+        const parseOfficialRates = (html) => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const normalizeText = (str = '') => str.replace(/\s+/g, ' ').trim();
+          const uppercase = (str = '') => normalizeText(str).toUpperCase();
 
-            const extractRate = (code) => {
-              const index = cells.findIndex((cell) => normalizeText(cell.textContent).toUpperCase() === code);
+          const matchCodes = (label, codes) => codes.some((code) => label.includes(code));
 
-              if (index >= 0 && cells[index + 1]) {
-                const nextValue = normalizeText(cells[index + 1].textContent).replace(',', '.');
-                const parsed = parseFloat(nextValue);
-                if (!Number.isNaN(parsed)) return parsed;
+          const parseTable = (table) => {
+            const headers = Array.from(table.querySelectorAll('thead th, tr th'));
+            const sellIndex = headers.findIndex((cell) => /VENTE|SELL/i.test(cell.textContent || ''));
+
+            let usd = null;
+            let eur = null;
+
+            const rows = Array.from(table.querySelectorAll('tbody tr, tr')).filter((row) =>
+              row.querySelectorAll('td').length > 0
+            );
+
+            rows.forEach((row) => {
+              const cells = Array.from(row.querySelectorAll('td'));
+              if (!cells.length) return;
+
+              const label = uppercase(cells[0].textContent);
+              const sellCell =
+                sellIndex >= 0 && cells[sellIndex]
+                  ? cells[sellIndex]
+                  : cells.length >= 3
+                    ? cells[2]
+                    : cells[cells.length - 1];
+
+              const rawValue = normalizeText(sellCell?.textContent || '').replace(',', '.');
+              const value = rawValue ? parseFloat(rawValue) : null;
+
+              if (value && matchCodes(label, ['USD', 'DOLLAR'])) {
+                usd = value;
               }
 
-              const regex = new RegExp(`${code}[^0-9]*([0-9]+(?:[.,][0-9]+)?)`, 'i');
-              const match = html.match(regex);
-              return match ? parseFloat(match[1].replace(',', '.')) : null;
-            };
+              if (value && matchCodes(label, ['EUR', 'EURO'])) {
+                eur = value;
+              }
+            });
 
-            return {
-              usd: extractRate('USD'),
-              eur: extractRate('EUR')
-            };
+            return { usd, eur };
           };
 
-          try {
-            for (const url of fallbacks) {
-              try {
-                const response = await fetch(url, { cache: 'no-cache' });
-                if (!response.ok) continue;
-
-                const html = await response.text();
-                const { usd, eur } = parseOfficialRates(html);
-
-                let updated = false;
-
-                if (usd) {
-                  setOfficialUSD(Number(usd.toFixed(3)));
-                  updated = true;
-                }
-
-                if (eur) {
-                  setOfficialEUR(Number(eur.toFixed(3)));
-                  updated = true;
-                }
-
-                if (updated) {
-                  setOfficialLastUpdate(new Date().toLocaleString());
-                  setIsFetchingOfficialRates(false);
-                  return;
-                }
-              } catch (innerError) {
-                console.warn('Retrying with next official source', innerError);
-              }
-            }
-
-            throw new Error('No official rates parsed');
-          } catch (error) {
-            console.error('Failed to fetch official rates', error);
-            setOfficialRateError(translationRef.current.rateFetchError);
-          } finally {
-            setIsFetchingOfficialRates(false);
+          for (const table of Array.from(doc.querySelectorAll('table'))) {
+            const result = parseTable(table);
+            if (result.usd || result.eur) return result;
           }
-        }, []);
 
-        const fetchBlackMarketRates = useCallback(async () => {
-          setIsFetchingBlackRates(true);
-          setBlackRateError('');
+          const blob = uppercase(doc.body?.textContent || '');
+          const usdMatch = blob.match(/USD[^\n]*VENTE[^0-9]*([0-9]+(?:[.,][0-9]+)?)/i);
+          const eurMatch = blob.match(/EUR[^\n]*VENTE[^0-9]*([0-9]+(?:[.,][0-9]+)?)/i);
 
-          const sourceUrl = 'https://dzsquare.dz/main';
-          const fallbacks = [
-            sourceUrl,
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(sourceUrl)}`,
-            `https://cors.isomorphic-git.org/${sourceUrl}`
-          ];
+          return {
+            usd: usdMatch ? parseFloat(usdMatch[1].replace(',', '.')) : null,
+            eur: eurMatch ? parseFloat(eurMatch[1].replace(',', '.')) : null
+          };
+        };
 
-          const parseRate = (html, code) => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const normalizeText = (str = '') => str.replace(/\s+/g, ' ').trim();
-            const upperCode = code.toUpperCase();
+        try {
+          for (const url of fallbacks) {
+            try {
+              const response = await fetch(url, { cache: 'no-cache' });
+              if (!response.ok) continue;
 
-            const cells = Array.from(doc.querySelectorAll('td, th, strong, b, span, div'));
-            const directCell = cells.find((cell) => normalizeText(cell.textContent).toUpperCase().startsWith(upperCode));
+              const html = await response.text();
+              const { usd, eur } = parseOfficialRates(html);
 
-            if (directCell) {
-              const neighbors = [directCell.nextElementSibling, directCell];
-              for (const node of neighbors) {
-                const candidate = node ? normalizeText(node.textContent) : '';
-                const match = candidate.match(/([0-9]+(?:[.,][0-9]+)?)/);
-                if (match) return parseFloat(match[1].replace(',', '.'));
+              let updated = false;
+
+              if (usd) {
+                setOfficialUSD(Number(usd.toFixed(3)));
+                updated = true;
               }
+
+              if (eur) {
+                setOfficialEUR(Number(eur.toFixed(3)));
+                updated = true;
+              }
+
+              if (updated) {
+                setOfficialLastUpdate(new Date().toLocaleString());
+                setIsFetchingOfficialRates(false);
+                return;
+              }
+            } catch (innerError) {
+              console.warn('Retrying with next official source', innerError);
             }
+          }
 
-            const textBlob = normalizeText(doc.body?.textContent || '');
-            const regexes = [
-              new RegExp(`${upperCode}\\s*(?:/DZD|/DA|:)?\\s*([0-9]+(?:[.,][0-9]+)?)`, 'i'),
-              code === 'USD'
-                ? /Dollar[^0-9]*([0-9]+(?:[.,][0-9]+)?)/i
-                : /Euro[^0-9]*([0-9]+(?:[.,][0-9]+)?)/i
-            ];
+          throw new Error('No official rates parsed');
+        } catch (error) {
+          console.error('Failed to fetch official rates', error);
+          setOfficialRateError(translationRef.current.rateFetchError);
+        } finally {
+          setIsFetchingOfficialRates(false);
+        }
+      }, []);
 
-            for (const regex of regexes) {
-              const match = textBlob.match(regex);
-              if (match) return parseFloat(match[1].replace(',', '.'));
+      const fetchBlackMarketRates = useCallback(async () => {
+        setIsFetchingBlackRates(true);
+        setBlackRateError('');
+
+        const primarySource = 'http://www.forexalgerie.com';
+        const fallbacks = [
+          primarySource,
+          'https://www.forexalgerie.com',
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(primarySource)}`,
+          `https://cors.isomorphic-git.org/${primarySource}`
+        ];
+
+        const parseRate = (html, code) => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const normalizeText = (str = '') => str.replace(/\s+/g, ' ').trim();
+          const uppercase = (str = '') => normalizeText(str).toUpperCase();
+          const codes = code === 'USD' ? ['USD', 'DOLLAR'] : ['EUR', 'EURO'];
+
+          const parseTable = (table) => {
+            const headers = Array.from(table.querySelectorAll('thead th, tr th'));
+            const sellIndex = headers.findIndex((cell) => /VENTE|SELL/i.test(cell.textContent || ''));
+
+            const rows = Array.from(table.querySelectorAll('tbody tr, tr')).filter((row) =>
+              row.querySelectorAll('td').length > 0
+            );
+
+            for (const row of rows) {
+              const cells = Array.from(row.querySelectorAll('td'));
+              if (!cells.length) continue;
+
+              const label = uppercase(cells[0].textContent);
+              if (!codes.some((c) => label.includes(c))) continue;
+
+              const sellCell =
+                sellIndex >= 0 && cells[sellIndex]
+                  ? cells[sellIndex]
+                  : cells.length >= 3
+                    ? cells[2]
+                    : cells[cells.length - 1];
+
+              const raw = normalizeText(sellCell?.textContent || '').replace(',', '.');
+              const value = raw ? parseFloat(raw) : null;
+              if (value) return value;
             }
 
             return null;
           };
 
-          try {
-            for (const url of fallbacks) {
-              try {
-                const response = await fetch(url, { cache: 'no-cache' });
-                if (!response.ok) continue;
-                const html = await response.text();
-
-                const usdRate = parseRate(html, 'USD');
-                const eurRate = parseRate(html, 'EUR');
-
-                let updated = false;
-
-                if (usdRate) {
-                  setBlackUSD(Number(usdRate.toFixed(3)));
-                  updated = true;
-                }
-
-                if (eurRate) {
-                  setBlackEUR(Number(eurRate.toFixed(3)));
-                  updated = true;
-                }
-
-                if (updated) {
-                  setBlackLastUpdate(new Date().toLocaleString());
-                  setIsFetchingBlackRates(false);
-                  return;
-                }
-              } catch (innerError) {
-                console.warn('Retrying with next dzsquare source', innerError);
-              }
-            }
-
-            throw new Error('No black market rates parsed');
-          } catch (error) {
-            console.error('Failed to fetch black market rates', error);
-            setBlackRateError(translationRef.current.blackRateFetchError);
-          } finally {
-            setIsFetchingBlackRates(false);
+          for (const table of Array.from(doc.querySelectorAll('table'))) {
+            const value = parseTable(table);
+            if (value) return value;
           }
-        }, []);
 
-        useEffect(() => {
-          fetchOfficialRates();
-          fetchBlackMarketRates();
-        }, [fetchOfficialRates, fetchBlackMarketRates]);
+          const blob = normalizeText(doc.body?.textContent || '');
+          const regex = new RegExp(
+            `${codes.join('|')}[^\n]*VENTE[^0-9]*([0-9]+(?:[.,][0-9]+)?)`,
+            'i'
+          );
+          const match = blob.match(regex);
+          return match ? parseFloat(match[1].replace(',', '.')) : null;
+        };
+
+        try {
+          for (const url of fallbacks) {
+            try {
+              const response = await fetch(url, { cache: 'no-cache' });
+              if (!response.ok) continue;
+              const html = await response.text();
+
+              const usdRate = parseRate(html, 'USD');
+              const eurRate = parseRate(html, 'EUR');
+
+              let updated = false;
+
+              if (usdRate) {
+                setBlackUSD(Number(usdRate.toFixed(3)));
+                updated = true;
+              }
+
+              if (eurRate) {
+                setBlackEUR(Number(eurRate.toFixed(3)));
+                updated = true;
+              }
+
+              if (updated) {
+                setBlackLastUpdate(new Date().toLocaleString());
+                setIsFetchingBlackRates(false);
+                return;
+              }
+            } catch (innerError) {
+              console.warn('Retrying with next forexalgerie source', innerError);
+            }
+          }
+
+          throw new Error('No black market rates parsed');
+        } catch (error) {
+          console.error('Failed to fetch black market rates', error);
+          setBlackRateError(translationRef.current.blackRateFetchError);
+        } finally {
+          setIsFetchingBlackRates(false);
+        }
+      }, []);
+
+      useEffect(() => {
+        fetchOfficialRates();
+        fetchBlackMarketRates();
+      }, [fetchOfficialRates, fetchBlackMarketRates]);
 
       const calculate = useCallback(() => {
         // Collect numeric inputs with safe defaults to avoid NaN propagation
