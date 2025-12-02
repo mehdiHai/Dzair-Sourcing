@@ -1,4 +1,4 @@
-const CACHE_NAME = "dzair-sourcing-v2";
+const CACHE_NAME = "dzair-sourcing-v3";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",

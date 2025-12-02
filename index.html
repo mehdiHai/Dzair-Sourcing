@@ -111,8 +111,37 @@ const { useState, useCallback, useEffect } = React;
         eur: 'يورو',
         vehicleInfo: 'معلومات السيارة',
         carPrice: 'سعر السيارة (FOB)',
-        vehicleAge: 'حالة السيارة',
-        brandNew: 'جديدة (0 كم)',
+  <!-- React / ReactDOM (Babel is loaded with a runtime fallback below) -->
+  <!-- Runtime loader for Babel with a CDN fallback -->
+  <script>
+    window.loadBabelStandalone = () => {
+      if (window.__babelPromise) return window.__babelPromise;
+
+      window.__babelPromise = new Promise((resolve, reject) => {
+        const onSuccess = () => resolve(window.Babel);
+        const onFailure = () => reject(new Error('Babel CDN sources are unreachable'));
+
+        const fallback = document.createElement('script');
+        fallback.src = 'https://cdn.jsdelivr.net/npm/@babel/standalone@7.26.0/babel.min.js';
+        fallback.async = true;
+        fallback.onload = onSuccess;
+        fallback.onerror = onFailure;
+
+        const primary = document.createElement('script');
+        primary.src = 'https://unpkg.com/@babel/standalone/babel.min.js';
+        primary.async = true;
+        primary.onload = onSuccess;
+        primary.onerror = () => {
+          document.head.appendChild(fallback);
+        };
+
+        document.head.appendChild(primary);
+      });
+
+      return window.__babelPromise;
+    };
+  </script>
+
         usedUnder3: 'مستعملة (أقل من 3 سنوات)',
         engineType: 'نوع المحرك',
         electric: 'كهربائي',
@@ -1698,3 +1727,40 @@ const { useState, useCallback, useEffect } = React;
         const compiledSource = transformed.code + "\n//# sourceURL=inline-app.jsx";
         const runApp = new Function('React', 'ReactDOM', compiledSource);
             "Une erreur est survenue lors du chargement de l'application. Veuillez actualiser ou vérifier votre connexion." +
+      const mount = document.getElementById('app');
+      const showError = (message) => {
+        if (!mount) return;
+        mount.innerHTML = '<div class="max-w-2xl mx-auto mt-16 text-center text-red-600 font-semibold">' + message + '</div>';
+      };
+
+      const boot = async () => {
+        try {
+          const babelLoader = window.loadBabelStandalone;
+          if (!babelLoader) {
+            throw new Error('Babel loader missing');
+          }
+          const Babel = await babelLoader();
+          if (!Babel) {
+            throw new Error('Babel failed to initialize');
+          }
+          const sourceEl = document.getElementById('app-source');
+          if (!sourceEl) {
+            throw new Error('App source not found');
+          }
+
+          const source = sourceEl.textContent;
+          const transformed = Babel.transform(source, {
+            presets: ['react'],
+            sourceType: 'script',
+          });
+
+          const compiledSource = transformed.code + "\n//# sourceURL=inline-app.jsx";
+          const runApp = new Function('React', 'ReactDOM', compiledSource);
+          runApp(React, ReactDOM);
+        } catch (err) {
+          console.error('App boot failed', err);
+          showError("Une erreur est survenue lors du chargement de l'application. Veuillez actualiser ou vérifier votre connexion. "+
+            (err && err.message ? `(${err.message})` : ''));
+      };
+
+      boot();
