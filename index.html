@@ -1,228 +1,106 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dzair Sourcing Cars - Calculateur d'Importation</title>
-
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- PWA manifest -->
-  <link rel="manifest" href="./manifest.json" />
-
-  <!-- jsPDF UMD for PDF export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
   <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            dzGreen: {
-              50: '#e8f5ec',
-              100: '#cfe8d9',
-              500: '#006233',
-              600: '#005229',
-              700: '#004220'
-            },
-            dzRed: {
-              500: '#D21034'
-            }
-          }
-        }
+    (async () => {
+      const response = await fetch('./app.jsx');
+      if (!response.ok) {
+        throw new Error(`Failed to load app source: ${response.status}`);
+      const source = await response.text();
+      const transformed = Babel.transform(source, {
+        presets: ['react'],
+        sourceType: 'script',
+      });
+
+      const runApp = new Function('React', 'ReactDOM', `${transformed.code}\n//# sourceURL=app.jsx`);
+      runApp(React, ReactDOM);
+    })().catch((err) => {
+      console.error('App boot failed', err);
+      const mount = document.getElementById('app');
+      if (mount) {
+        mount.innerHTML = '<div class="max-w-2xl mx-auto mt-16 text-center text-red-600 font-semibold">' +
+          'Une erreur est survenue lors du chargement de l\'application. Veuillez actualiser ou vérifier votre connexion.' +
+          '</div>';
       }
-    }
-  </script>
+    });
 
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #f3f4f6;
-      color: #111827;
-      min-height: 100vh;
-    }
-    .rtl {
-      direction: rtl;
-      text-align: right;
-      font-family: 'Cairo', sans-serif;
-    }
-    .ltr {
-      direction: ltr;
-      text-align: left;
-    }
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    input[type="number"] {
-      -moz-appearance: textfield;
-    }
-    .card {
-      background: white;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      padding: 1.5rem;
-    }
-    .input-field {
-      width: 100%;
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid #d1d5db;
-      background: #f9fafb;
-      transition: all 0.15s ease;
-      font-size: 14px;
-    }
-    .input-field::placeholder {
-      color: #9ca3af;
-    }
-    .input-field:focus {
-      outline: none;
-      border-color: #006233;
-      background: #ffffff;
-      box-shadow: 0 0 0 2px rgba(0, 98, 51, 0.15);
-    }
-    .result-card {
-      background: #006233;
-      color: white;
-      border-radius: 12px;
-      padding: 16px 18px;
-    }
-    .tag-yellow {
-      background: #fef3c7;
-      color: #92400e;
-      border-radius: 999px;
-      font-size: 11px;
-      padding: 2px 8px;
-    }
-    .tag-blue {
-      background: #e0edff;
-      color: #1d4ed8;
-      border-radius: 999px;
-      font-size: 11px;
-      padding: 2px 8px;
-    }
-    .tag-green {
-      background: #dcfce7;
-      color: #166534;
-      border-radius: 999px;
-      font-size: 11px;
-      padding: 2px 8px;
-    }
-    .badge-best {
-      background: #dcfce7;
-      color: #166534;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 2px 8px;
-      margin-left: 6px;
-    }
-    .animate-fade-in {
-      animation: fadeIn 0.25s ease-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
-</head>
+  <script id="app-source" type="text/plain">
+const { useState, useCallback, useEffect } = React;
 
-<body class="min-h-screen">
-  <div id="app"></div>
+    // --- Embedded PDF fonts (base64, avoids binary assets in the repo) ---
+    const DEJAVU_SANS_BASE64 = document.getElementById('dejavu-sans-regular').textContent.trim();
+    const DEJAVU_SANS_BOLD_BASE64 = document.getElementById('dejavu-sans-bold').textContent.trim();
 
-  <!-- React / ReactDOM / Babel -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    const iconBaseProps = {
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+      strokeWidth: 1.8,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round'
+    };
 
-  <script type="text/babel">
-    const { useState, useEffect, useCallback } = React;
-
-    /* ------------ Icons (inline SVG) ------------ */
-
-    const IconCar = ({ className = "w-5 h-5" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-        <path d="M3 13l1.2-4.5A2 2 0 0 1 6.15 7h11.7a2 2 0 0 1 1.95 1.5L21 13" />
-        <path d="M5 17h14" />
-        <circle cx="7" cy="17" r="1.4" />
-        <circle cx="17" cy="17" r="1.4" />
-        <path d="M4 13h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4z" />
+    const IconInfo = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <circle cx='12' cy='12' r='9' />
+        <line x1='12' y1='16' x2='12' y2='12' />
+        <circle cx='12' cy='8' r='0.8' />
       </svg>
     );
 
-    const IconShip = ({ className = "w-5 h-5" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-        <path d="M3 12h18l-2 7H5l-2-7z" />
-        <path d="M7 12V5h6v7" />
-        <path d="M7 7h6" />
-        <path d="M3 19c1 .8 2.3 1.2 3.5 1.2S9.9 20 11 19c1 .8 2.3 1.2 3.5 1.2S17.9 20 19 19" />
+    const IconLightbulb = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <path d='M9 18h6' />
+        <path d='M10 22h4' />
+        <path d='M9.5 14a4.5 4.5 0 1 1 5 0c-.5.35-.8.9-.8 1.5v.5h-3.4v-.5c0-.6-.3-1.15-.8-1.5Z' />
       </svg>
     );
 
-    const IconClipboard = ({ className = "w-5 h-5" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-        <rect x="7" y="4" width="10" height="16" rx="2" />
-        <path d="M9 4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V5H9V4.5z" />
-        <path d="M10 9h4" />
-        <path d="M10 13h4" />
+    const IconCar = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <path d='M5 16h14l-1-5.5a2 2 0 0 0-2-1.5H8a2 2 0 0 0-2 1.5Z' />
+        <path d='M5 16v2a1 1 0 0 0 1 1h1' />
+        <path d='M18 16v2a1 1 0 0 1-1 1h-1' />
+        <circle cx='7.5' cy='18.5' r='1' />
+        <circle cx='16.5' cy='18.5' r='1' />
       </svg>
     );
 
-    const IconExchange = ({ className = "w-5 h-5" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-        <path d="M5 7h11l-2.5-2.5M5 17h11l-2.5 2.5" />
-        <path d="M19 5v4M19 15v4" />
+    const IconShip = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <path d='M4 15h16l-2 6H6Z' />
+        <path d='M6 15V7l6-2 6 2v8' />
+        <path d='M6 11h12' />
       </svg>
     );
 
-    const IconChart = ({ className = "w-5 h-5" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-        <path d="M4 19h16" />
-        <rect x="6" y="11" width="3" height="6" rx="0.5" />
-        <rect x="11" y="9" width="3" height="8" rx="0.5" />
-        <rect x="16" y="6" width="3" height="11" rx="0.5" />
+    const IconClipboard = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <path d='M9 4h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z' />
+        <path d='M10 2h4v2h-4Z' />
       </svg>
     );
 
-    const IconInfo = ({ className = "w-5 h-5" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 10v6" />
-        <circle cx="12" cy="7" r="0.8" fill="currentColor" />
+    const IconChart = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <path d='M4 19h16' />
+        <rect x='6' y='10' width='3' height='7' rx='1' />
+        <rect x='11' y='7' width='3' height='10' rx='1' />
+        <rect x='16' y='12' width='3' height='5' rx='1' />
       </svg>
     );
 
-    const IconLightbulb = ({ className = "w-5 h-5" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-        <path d="M9 18h6" />
-        <path d="M10 21h4" />
-        <path d="M9 14.5c-1.3-1-2-2.5-2-4.1A5 5 0 0 1 12 5a5 5 0 0 1 5 5.4c-.1 1.5-.8 2.8-2 3.7-.5.4-1 .9-1 1.9v0H10v0c0-1-0.5-1.5-1-1.9z" />
+    const IconTax = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <circle cx='8.5' cy='8.5' r='1.5' />
+        <circle cx='15.5' cy='15.5' r='1.5' />
+        <path d='M6 18 18 6' />
       </svg>
     );
 
-    const IconShieldCheck = ({ className = "w-5 h-5" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-        <path d="M12 3L5 6v6c0 4 2.7 7 7 9 4.3-2 7-5 7-9V6l-7-3z" />
-        <path d="M9.5 12.5l1.8 1.8 3.2-3.6" />
+    const IconShieldCheck = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <path d='M12 4 5 7v5c0 4.1 2.8 6.7 7 8 4.2-1.3 7-3.9 7-8V7Z' />
+        <path d='m9.5 12.5 2 2 3-3' />
       </svg>
     );
-
-    const IconTax = ({ className = "w-5 h-5" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-        <rect x="4" y="5" width="16" height="14" rx="2" />
-        <path d="M8 9l2 2M10 9l-2 2" />
-        <circle cx="15.5" cy="10" r="1" />
-        <path d="M13.5 14h4" />
-      </svg>
-    );
-
-    /* ------------ Translations ------------ */
 
     const translations = {
       ar: {
@@ -233,8 +111,37 @@
         eur: 'يورو',
         vehicleInfo: 'معلومات السيارة',
         carPrice: 'سعر السيارة (FOB)',
-        vehicleAge: 'حالة السيارة',
-        brandNew: 'جديدة (0 كم)',
+  <!-- React / ReactDOM (Babel is loaded with a runtime fallback below) -->
+  <!-- Runtime loader for Babel with a CDN fallback -->
+  <script>
+    window.loadBabelStandalone = () => {
+      if (window.__babelPromise) return window.__babelPromise;
+
+      window.__babelPromise = new Promise((resolve, reject) => {
+        const onSuccess = () => resolve(window.Babel);
+        const onFailure = () => reject(new Error('Babel CDN sources are unreachable'));
+
+        const fallback = document.createElement('script');
+        fallback.src = 'https://cdn.jsdelivr.net/npm/@babel/standalone@7.26.0/babel.min.js';
+        fallback.async = true;
+        fallback.onload = onSuccess;
+        fallback.onerror = onFailure;
+
+        const primary = document.createElement('script');
+        primary.src = 'https://unpkg.com/@babel/standalone/babel.min.js';
+        primary.async = true;
+        primary.onload = onSuccess;
+        primary.onerror = () => {
+          document.head.appendChild(fallback);
+        };
+
+        document.head.appendChild(primary);
+      });
+
+      return window.__babelPromise;
+    };
+  </script>
+
         usedUnder3: 'مستعملة (أقل من 3 سنوات)',
         engineType: 'نوع المحرك',
         electric: 'كهربائي',
@@ -252,6 +159,7 @@
         officialRate: 'السعر الرسمي',
         blackMarketRate: 'السعر الموازي',
         lastUpdate: 'آخر تحديث',
+        manualRateEntry: 'إدخال يدوي (دينار لكل عملة)',
         results: 'تفاصيل التكلفة',
         fobPrice: 'سعر الشراء (FOB)',
         atBlackRate: 'بسعر السوق الموازي',
@@ -311,7 +219,18 @@
         resaleTimelineAfter36: 'بعد 36 شهر: لا يوجد استرجاع للامتياز الجبائي',
         resalePeriodLabel: 'فترة إعادة البيع (قانون المالية 2025)',
         pdfDownload: 'تحميل تقرير PDF مفصل',
-        pdfSubtitle: 'نسخة للطباعة للبنك أو الجمارك أو الزبون'
+        pdfSubtitle: 'نسخة للطباعة للبنك أو الجمارك أو الزبون',
+        terminologyTitle: 'المصطلحات والاختصارات',
+        termCIF: 'CIF',
+        termCIFDesc: 'التكلفة + التأمين + الشحن (القيمة التي تعتمدها الجمارك)',
+        termFOB: 'FOB',
+        termFOBDesc: 'قيمة المركبة بدون نقل أو تأمين',
+        termDD: 'DD',
+        termDDDesc: 'حقوق الجمركة المحسوبة على قيمة CIF',
+        termTCS: 'TCS',
+        termTCSDesc: 'رسم التضامن (3٪ من قيمة CIF)',
+        termTVA: 'TVA',
+        termTVADesc: 'الضريبة على القيمة المضافة بعد DD وTCS'
       },
       fr: {
         title: 'Dzair Sourcing Cars',
@@ -340,6 +259,7 @@
         officialRate: 'Taux Officiel',
         blackMarketRate: 'Taux Parallèle',
         lastUpdate: 'Dernière mise à jour',
+        manualRateEntry: 'Saisie manuelle (DZD par devise)',
         results: 'Détail des Coûts',
         fobPrice: "Prix d'achat (FOB)",
         atBlackRate: 'au taux parallèle',
@@ -399,7 +319,18 @@
         resaleTimelineAfter36: 'Après 36 mois : aucun reversement de l’avantage fiscal',
         resalePeriodLabel: 'Période de revente (Loi de Finances 2025)',
         pdfDownload: 'Télécharger le rapport PDF détaillé',
-        pdfSubtitle: 'Version imprimable pour banque, douane ou client'
+        pdfSubtitle: 'Version imprimable pour banque, douane ou client',
+        terminologyTitle: 'Terminologie & Sigles',
+        termCIF: 'CIF',
+        termCIFDesc: 'Coût + Assurance + Fret (valeur utilisée par la douane)',
+        termFOB: 'FOB',
+        termFOBDesc: 'Valeur du véhicule hors transport et assurance',
+        termDD: 'DD',
+        termDDDesc: 'Droits de Douane calculés sur la valeur CIF',
+        termTCS: 'TCS',
+        termTCSDesc: 'Taxe de solidarité (3 % du CIF)',
+        termTVA: 'TVA',
+        termTVADesc: 'Taxe sur la valeur ajoutée calculée après DD et TCS'
       },
       tz: {
         title: 'Dzair Sourcing Cars',
@@ -428,6 +359,7 @@
         officialRate: 'Azal unṣib',
         blackMarketRate: 'Azal azeggan',
         lastUpdate: 'Aleqqem aneggaru',
+        manualRateEntry: 'Asekcem awfus (DZD i yal tawacult)',
         results: 'Talɣut n wezwi',
         fobPrice: 'Azal n usɣ (FOB)',
         atBlackRate: 's uzal azeggan',
@@ -487,8 +419,18 @@
         resaleTimelineAfter36: 'Seld 36 ayowr: ulac aɣelsan',
         resalePeriodLabel: 'Talla n uznuzu (Usɣel n Tedrimt 2025)',
         pdfDownload: 'Sider rapport PDF ummuggar',
-        pdfSubtitle: 'Tawsit i usiggez, tabanka neɣ lmerk'
-      }
+        pdfSubtitle: 'Tawsit i usiggez, tabanka neɣ lmerk',
+        terminologyTitle: 'Isemaden d yizemlen',
+        termCIF: 'CIF',
+        termCIFDesc: 'Azal + tasertit + asiweḍ i yettuseqdacen sɣur lmerk',
+        termFOB: 'FOB',
+        termFOBDesc: 'Azal n tkerrust war asiweḍ neɣ tasertit',
+        termDD: 'DD',
+        termDDDesc: 'Izerfan n lmerk ittwasenqen ɣef CIF',
+        termTCS: 'TCS',
+        termTCSDesc: 'Tawsit n tiddukla (3% n CIF)',
+        termTVA: 'TVA',
+        termTVADesc: 'TVA tettwasḥebbes seld DD d TCS'
     };
 
     /* ------------ Tax rates ------------ */
@@ -525,6 +467,8 @@
     const formatNumber = (num) =>
       new Intl.NumberFormat('fr-DZ').format(Math.round(num || 0));
 
+    const toNumber = (value) => parseFloat(value) || 0;
+
     const formatCurrency = (num, curr = 'DZD') => {
       if (curr === 'DZD') return `${formatNumber(num)} DZD`;
       const symbol = curr === 'USD' ? '$' : '€';
@@ -547,7 +491,6 @@
       const [officialEUR, setOfficialEUR] = useState(defaultRates.officialEUR);
       const [blackUSD, setBlackUSD] = useState(defaultRates.blackUSD);
       const [blackEUR, setBlackEUR] = useState(defaultRates.blackEUR);
-      const [lastUpdate] = useState(new Date().toLocaleString());
       const [results, setResults] = useState(null);
       const [showResults, setShowResults] = useState(false);
       const [potentialUsedSavings, setPotentialUsedSavings] = useState(0);
@@ -568,11 +511,12 @@
       ];
 
       const calculate = useCallback(() => {
-        const price = parseFloat(carPrice) || 0;
-        const freight = parseFloat(freightInsurance) || 0;
-        const inspectionFee = parseFloat(inspection) || 0;
-        const docFee = parseFloat(documentation) || 0;
-        const portFee = parseFloat(portBroker) || 0;
+        // Collect numeric inputs with safe defaults to avoid NaN propagation
+        const price = toNumber(carPrice);
+        const freight = toNumber(freightInsurance);
+        const inspectionFee = toNumber(inspection);
+        const docFee = toNumber(documentation);
+        const portFee = toNumber(portBroker);
 
         const blackRate = currency === 'USD' ? blackUSD : blackEUR;
         const officialRate = currency === 'USD' ? officialUSD : officialEUR;
@@ -584,6 +528,7 @@
           return;
         }
 
+        // Convert to DZD using chosen rates; customs (CIF) must use the official rate
         const fobDZD = price * blackRate;
         const freightDZD = freight * blackRate;
         const localExpenses = inspectionFee + docFee + portFee;
@@ -597,6 +542,7 @@
         let taxAdvantageRate = 0;
 
         if (vehicleAge === 'new') {
+          // New vehicles: DD + TCS + TVA + vignette applied to CIF base
           const ddRate = newCarDdRates[engineType] || 0;
           const dd = cifCustoms * (ddRate / 100);
           const tcs = cifCustoms * (TAX_TCS / 100);
@@ -745,7 +691,7 @@
       })();
 
       // --- PDF Export (premium layout + logo) ---
-      const exportPDF = useCallback(() => {
+      const exportPDF = useCallback(async () => {
         if (!results) return;
 
         const jsPdfGlobal = window.jspdf || window.jsPDF;
@@ -756,141 +702,219 @@
           return;
         }
 
-        const generate = (logoImg) => {
+        const generate = async (logoImg) => {
           const doc = new jsPDF('p', 'mm', 'a4');
-          const marginX = 15;
-          let y = 15;
+          await ensurePdfFonts(doc);
+          doc.setFont('DejaVuSans', 'normal');
+          const marginX = 16;
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const contentWidth = pageWidth - marginX * 2;
+          let y = 20;
+
+          const exportDate = new Intl.DateTimeFormat(lang === 'ar' ? 'ar-DZ' : 'fr-DZ', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+          }).format(new Date());
+
+          const totalInCurrency = results.officialRate
+            ? formatCurrency(results.total / results.officialRate, currency)
+            : formatCurrency(results.total, currency);
+
+          const ensureSpace = (needed = 0) => {
+            const bottomMargin = 18;
+            if (y + needed > pageHeight - bottomMargin) {
+              doc.addPage();
+              y = 18;
+            }
+          };
 
           const engineLabel = (engineButtons.find(b => b.value === engineType)?.label) || engineType;
           const vehicleAgeLabel = vehicleAge === 'new' ? t.brandNew : t.usedUnder3;
 
-          // Header avec logo (Option B – taille moyenne)
-          const logoSize = 14;
+          const addSectionTitle = (index, label) => {
+            ensureSpace(18);
+            doc.setFillColor(0, 98, 51);
+            doc.setDrawColor(0, 98, 51);
+            doc.setTextColor(255);
+            doc.roundedRect(marginX, y, contentWidth, 10, 2, 2, 'FD');
+            doc.setFont('DejaVuSans', 'bold');
+            doc.setFontSize(11.5);
+            doc.text(`${index}. ${label}`, marginX + 4, y + 6.8);
+            y += 14;
+            doc.setFont('DejaVuSans', 'normal');
+            doc.setTextColor(32);
+          };
+
+          const addKeyValueRow = (label, value) => {
+            doc.setFont('DejaVuSans', 'normal');
+            doc.setFontSize(10.5);
+            const labelLines = doc.splitTextToSize(`• ${label}`, contentWidth * 0.6);
+            const rowHeight = Math.max(labelLines.length * 5, 7);
+            ensureSpace(rowHeight + 6);
+            doc.setTextColor(55);
+            doc.text(labelLines, marginX, y + 4.8);
+            doc.setFont('DejaVuSans', 'bold');
+            doc.setTextColor(20);
+            doc.text(value, pageWidth - marginX, y + 4.8, { align: 'right' });
+            doc.setFont('DejaVuSans', 'normal');
+            doc.setTextColor(32);
+            y += rowHeight + 4;
+          };
+
+          const addParagraph = (text, color = [60, 60, 60]) => {
+            doc.setFont('DejaVuSans', 'normal');
+            doc.setFontSize(9.5);
+            doc.setTextColor(...color);
+            const lines = doc.splitTextToSize(text, contentWidth);
+            ensureSpace(lines.length * 4.6 + 5);
+            doc.text(lines, marginX, y);
+            y += lines.length * 4.6 + 3;
+            doc.setTextColor(30);
+          };
+
+          const addSummaryCard = () => {
+            ensureSpace(26);
+            doc.setFillColor(245, 248, 250);
+            doc.setDrawColor(0, 98, 51);
+            doc.setLineWidth(0.35);
+            doc.roundedRect(marginX, y - 3, contentWidth, 24, 2, 2, 'FD');
+
+            doc.setFont('DejaVuSans', 'bold');
+            doc.setFontSize(12);
+            doc.setTextColor(0, 98, 51);
+            doc.text(t.results, marginX + 4, y + 5);
+            doc.text(formatCurrency(results.total), pageWidth - marginX - 4, y + 5, { align: 'right' });
+            doc.setFont('DejaVuSans', 'normal');
+            doc.setFontSize(9.5);
+            doc.setTextColor(60);
+            doc.text(`${t.totalCost} (${currency})`, marginX + 4, y + 12.5);
+            doc.setFont('DejaVuSans', 'bold');
+            doc.setTextColor(30);
+            doc.text(totalInCurrency, pageWidth - marginX - 4, y + 12.5, { align: 'right' });
+
+            doc.setFont('DejaVuSans', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(95);
+            doc.text(`${t.lastUpdate}: ${exportDate}`, marginX + 4, y + 19);
+            doc.text(
+              `${t.officialRate}: ${formatNumber(results.officialRate)} DZD/${currency}`,
+              pageWidth - marginX - 4,
+              y + 19,
+              { align: 'right' }
+            );
+
+            doc.setLineWidth(0.2);
+            doc.setTextColor(30);
+            y += 26;
+          };
+
+          // Header avec logo (centré et aéré)
+          const logoSize = 16;
           if (logoImg) {
             try {
-              doc.addImage(logoImg, 'PNG', marginX, y - 1, logoSize, logoSize);
+              doc.addImage(logoImg, 'PNG', marginX, y - 4, logoSize, logoSize);
             } catch (e) {
               // si souci avec l'image, on continue sans casser le PDF
             }
           }
 
-          doc.setFontSize(16);
+          doc.setFont('DejaVuSans', 'bold');
+          doc.setFontSize(16.5);
           doc.setTextColor(0, 98, 51);
-          doc.text(t.title, marginX + logoSize + 6, y + 4);
-          doc.setFontSize(10);
-          doc.setTextColor(90);
+          doc.text(t.title, marginX + logoSize + 6, y + 2);
+          doc.setFont('DejaVuSans', 'normal');
+          doc.setFontSize(10.5);
+          doc.setTextColor(85);
           doc.text(t.subtitle, marginX + logoSize + 6, y + 9);
 
-          y += 20;
+          y += 22;
 
-          // Encadré titre
-          doc.setDrawColor(0, 98, 51);
-          doc.setLineWidth(0.4);
-          doc.roundedRect(marginX, y - 10, 180 - marginX * 0.5, 10, 2, 2);
+          addSummaryCard();
 
-          // Section: Basic info
-          doc.setFontSize(12);
-          doc.setTextColor(30);
-          doc.text('1. Résumé du véhicule et de l’opération', marginX, y + 2);
-          y += 8;
-          doc.setFontSize(10);
-          doc.text(`• ${t.vehicleAge}: ${vehicleAgeLabel}`, marginX, y); y += 5;
-          doc.text(`• ${t.engineType}: ${engineLabel}`, marginX, y); y += 5;
-          doc.text(`• ${t.carPrice}: ${formatCurrency(results.price, currency)} (${currency})`, marginX, y); y += 5;
-          doc.text(`• ${t.freightCost}: ${formatCurrency(results.freight, currency)} (${currency})`, marginX, y); y += 8;
+          addSectionTitle(1, 'Résumé du véhicule et de l’opération');
+          addKeyValueRow(t.vehicleAge, vehicleAgeLabel);
+          addKeyValueRow(t.engineType, engineLabel);
+          addKeyValueRow(t.carPrice, `${formatCurrency(results.price, currency)} (${currency})`);
+          addKeyValueRow(t.freightCost, `${formatCurrency(results.freight, currency)} (${currency})`);
 
-          // Section: Cost breakdown
-          doc.setFontSize(12);
-          doc.setTextColor(30);
-          doc.text('2. Coût global détaillé (en DZD)', marginX, y);
-          y += 6;
-          doc.setFontSize(10);
-
-          const lineItems = [
+          addSectionTitle(2, 'Coût global détaillé (en DZD)');
+          [
             { label: t.fobPrice, value: formatCurrency(results.fobDZD) },
             { label: t.freightCost, value: formatCurrency(results.freightDZD) },
             { label: t.otherFees, value: formatCurrency(results.localExpenses) },
             { label: t.customsCIF, value: formatCurrency(results.cifCustoms) },
             { label: t.customsRights, value: formatCurrency(results.totalTax) },
-          ];
-          if (results.newCarTaxAmount > 0) {
-            lineItems.push({ label: t.newCarTax, value: formatCurrency(results.newCarTaxAmount) });
-          }
-          lineItems.push({ label: t.totalCost, value: formatCurrency(results.total) });
+            ...(results.newCarTaxAmount > 0 ? [{ label: t.newCarTax, value: formatCurrency(results.newCarTaxAmount) }] : []),
+            { label: t.totalCost, value: formatCurrency(results.total) },
+          ].forEach(item => addKeyValueRow(item.label, item.value));
 
-          lineItems.forEach(item => {
-            doc.text(`• ${item.label}`, marginX, y);
-            doc.text(item.value, 200 - marginX, y, { align: 'right' });
-            y += 5;
-          });
-
-          y += 4;
-          doc.setFontSize(9);
-          doc.setTextColor(110);
+          doc.setFontSize(9.5);
+          doc.setTextColor(90);
+          ensureSpace(14);
+          doc.roundedRect(marginX, y - 2.5, contentWidth, 11, 2, 2, 'S');
           doc.text(
-            `${t.blackMarketRate}: ${formatNumber(results.blackRate)} DZD/${currency}  |  ${t.officialRate}: ${formatNumber(results.officialRate)} DZD/${currency}`,
-            marginX,
-            y
+            `${t.blackMarketRate}: ${formatNumber(results.blackRate)} DZD/${currency}`,
+            marginX + 2.5,
+            y + 2
           );
-          y += 8;
+          doc.text(
+            `${t.officialRate}: ${formatNumber(results.officialRate)} DZD/${currency}`,
+            pageWidth - marginX - 2.5,
+            y + 2,
+            { align: 'right' }
+          );
+          y += 14;
 
-          // Section: Used car tax advantage
           if (vehicleAge === 'used' && resaleInfo && results.taxAdvantageAmount > 0) {
-            doc.setFontSize(12);
-            doc.setTextColor(30);
-            doc.text('3. Avantage fiscal sur véhicule d’occasion', marginX, y);
-            y += 6;
-            doc.setFontSize(10);
-            doc.text(`• ${t.resaleAdvantageAmount}`, marginX, y);
-            doc.text(formatCurrency(resaleInfo.advantage), 200 - marginX, y, { align: 'right' });
-            y += 5;
-            doc.text(`• ${t.baseRate}: ${formatNumber(results.taxes.baseRate)}%`, marginX, y); y += 5;
-            doc.text(`• ${t.finalRate}: ${formatNumber(results.taxes.finalRate)}%`, marginX, y); y += 8;
+            addSectionTitle(3, 'Avantage fiscal sur véhicule d’occasion');
+            addKeyValueRow(t.resaleAdvantageAmount, formatCurrency(resaleInfo.advantage));
+            addKeyValueRow(`${t.baseRate}`, `${formatNumber(results.taxes.baseRate)}%`);
+            addKeyValueRow(`${t.finalRate}`, `${formatNumber(results.taxes.finalRate)}%`);
           }
 
-          // Section: Loi de Finances 2025 – Revente
           if (vehicleAge === 'used' && resaleInfo) {
-            doc.setFontSize(12);
-            doc.setTextColor(30);
-            doc.text('4. Loi de Finances 2025 – Revente & reversement de l’avantage fiscal', marginX, y);
-            y += 6;
-            doc.setFontSize(10);
+            addSectionTitle(4, 'Loi de Finances 2025 – Revente & reversement de l’avantage fiscal');
 
-            doc.text(`• ${t.resalePeriodLabel}:`, marginX, y);
-            doc.text(resalePeriodLabel, marginX + 4, y + 5);
-            y += 10;
-
-            doc.text(`• ${t.resaleRefundAmount}`, marginX, y);
-            doc.text(formatCurrency(resaleInfo.refund), 200 - marginX, y, { align: 'right' });
-            y += 5;
+            addKeyValueRow(t.resalePeriodLabel, resalePeriodLabel);
+            addKeyValueRow(t.resaleRefundAmount, formatCurrency(resaleInfo.refund));
             if (resaleInfo.keep > 0) {
-              doc.text(`• ${t.resaleSavedLabel}`, marginX, y);
-              doc.text(formatCurrency(resaleInfo.keep), 200 - marginX, y, { align: 'right' });
-              y += 5;
+              addKeyValueRow(t.resaleSavedLabel, formatCurrency(resaleInfo.keep));
             }
 
-            y += 3;
+            doc.setFontSize(10.5);
             doc.setTextColor(180, 40, 40);
-            doc.text(`⚠ ${t.resaleRiskTitle}`, marginX, y); y += 5;
-            doc.setFontSize(9);
-            doc.text(resaleRiskText, marginX, y); y += 8;
+            ensureSpace(16);
+            doc.text(`⚠ ${t.resaleRiskTitle}`, marginX, y);
+            y += 5.5;
+            addParagraph(resaleRiskText, [160, 40, 40]);
 
-            doc.setTextColor(90);
-            doc.setFontSize(9);
-            doc.text(t.resaleTimelineTitle, marginX, y); y += 5;
-            doc.text(`• ${t.resaleTimeline0_12}`, marginX, y); y += 4;
-            doc.text(`• ${t.resaleTimeline12_24}`, marginX, y); y += 4;
-            doc.text(`• ${t.resaleTimeline24_36}`, marginX, y); y += 4;
-            doc.text(`• ${t.resaleTimelineAfter36}`, marginX, y); y += 8;
+            doc.setFontSize(9.5);
+            doc.setTextColor(80);
+            ensureSpace(28);
+            doc.text(t.resaleTimelineTitle, marginX, y);
+            y += 5.5;
+            [
+              t.resaleTimeline0_12,
+              t.resaleTimeline12_24,
+              t.resaleTimeline24_36,
+              t.resaleTimelineAfter36,
+            ].forEach(line => {
+              doc.text(`• ${line}`, marginX, y);
+              y += 4.4;
+            });
+            y += 5;
+            doc.setTextColor(30);
           }
 
           // Legal refs footer
-          doc.setDrawColor(200);
-          doc.line(marginX, 280, 200 - marginX, 280);
-          doc.setFontSize(8);
-          doc.setTextColor(120);
+          doc.setDrawColor(210);
+          doc.line(marginX, 280, pageWidth - marginX, 280);
+          doc.setFont('DejaVuSans', 'normal');
+          doc.setFontSize(8.5);
+          doc.setTextColor(110);
           doc.text(`${t.legalRef}: ${t.decree}; ${t.article}`, marginX, 285);
-          doc.text('https://www.douane.gov.dz', 200 - marginX, 285, { align: 'right' });
+          doc.text('https://www.douane.gov.dz', pageWidth - marginX, 285, { align: 'right' });
 
           doc.save('Dzair_Sourcing_Cars_Report.pdf');
         };
@@ -898,9 +922,18 @@
         // Charger le logo puis générer
         const img = new Image();
         img.src = './icon-512.png';
-        img.onload = () => generate(img);
-        img.onerror = () => generate(null);
-      }, [results, t, vehicleAge, resaleInfo, resaleRiskText, currency, engineType, engineButtons, resalePeriod, resalePeriodLabel]);
+        const safeGenerate = async (img) => {
+          try {
+            await generate(img);
+          } catch (error) {
+            console.error('PDF export failed', error);
+            alert('Impossible de générer le PDF, veuillez réessayer.');
+          }
+        };
+
+        img.onload = () => safeGenerate(img);
+        img.onerror = () => safeGenerate(null);
+      }, [results, t, vehicleAge, resaleInfo, resaleRiskText, currency, engineType, engineButtons, resalePeriod, resalePeriodLabel, lang]);
 
       return (
         <div className={`min-h-screen pb-10 ${containerClass}`}>
@@ -991,6 +1024,72 @@
                     <p className="text-blue-800 mt-1">
                       {t.officialInfo}
                     </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-3 text-xs md:text-sm mt-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 mt-1" />
+                    <div>
+                      <div className="font-semibold text-amber-800">{t.blackMarketRate}</div>
+                      <p className="text-[11px] text-amber-800">{t.manualRateEntry}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[11px] text-amber-800 mb-1">USD/DZD</label>
+                      <input
+                        type="number"
+                        value={blackUSD}
+                        min="0"
+                        onChange={(e) => setBlackUSD(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-amber-800 mb-1">EUR/DZD</label>
+                      <input
+                        type="number"
+                        value={blackEUR}
+                        min="0"
+                        onChange={(e) => setBlackEUR(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-500 mt-1" />
+                    <div>
+                      <div className="font-semibold text-blue-800">{t.officialRate}</div>
+                      <p className="text-[11px] text-blue-800">{t.manualRateEntry}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[11px] text-blue-800 mb-1">USD/DZD</label>
+                      <input
+                        type="number"
+                        value={officialUSD}
+                        min="0"
+                        onChange={(e) => setOfficialUSD(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-blue-800 mb-1">EUR/DZD</label>
+                      <input
+                        type="number"
+                        value={officialEUR}
+                        min="0"
+                        onChange={(e) => setOfficialEUR(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1182,77 +1281,27 @@
                   </div>
                 </div>
 
-                {/* Exchange rates */}
+                {/* Terminology */}
                 <div className="card">
                   <h2 className="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
                     <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
-                      <IconExchange className="w-4 h-4" />
+                      <IconInfo className="w-4 h-4" />
                     </span>
-                    {t.exchangeRates}
+                    {t.terminologyTitle}
                   </h2>
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    {/* Parallel */}
-                    <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
-                      <h3 className="font-semibold text-amber-800 mb-2 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-500" />
-                        {t.blackMarketRate}
-                      </h3>
-                      <div className="space-y-2">
-                        <div>
-                          <label className="block text-[11px] text-amber-800 mb-1">USD/DZD</label>
-                          <input
-                            type="number"
-                            value={blackUSD}
-                            min="0"
-                            onChange={(e) => setBlackUSD(parseFloat(e.target.value) || 0)}
-                            className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] text-amber-800 mb-1">EUR/DZD</label>
-                          <input
-                            type="number"
-                            value={blackEUR}
-                            min="0"
-                            onChange={(e) => setBlackEUR(parseFloat(e.target.value) || 0)}
-                            className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
-                          />
-                        </div>
+                  <div className="space-y-2 text-xs md:text-sm">
+                    {[
+                      { label: t.termCIF, desc: t.termCIFDesc, color: 'text-blue-700 bg-blue-50 border-blue-100' },
+                      { label: t.termFOB, desc: t.termFOBDesc, color: 'text-amber-700 bg-amber-50 border-amber-100' },
+                      { label: t.termDD, desc: t.termDDDesc, color: 'text-green-700 bg-green-50 border-green-100' },
+                      { label: t.termTCS, desc: t.termTCSDesc, color: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
+                      { label: t.termTVA, desc: t.termTVADesc, color: 'text-purple-700 bg-purple-50 border-purple-100' }
+                    ].map(({ label, desc, color }) => (
+                      <div key={label} className={`border rounded-md p-2 ${color}`}>
+                        <div className="font-semibold">{label}</div>
+                        <div className="text-[11px] md:text-xs mt-1 leading-snug">{desc}</div>
                       </div>
-                    </div>
-
-                    {/* Official */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                      <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-blue-500" />
-                        {t.officialRate}
-                      </h3>
-                      <div className="space-y-2">
-                        <div>
-                          <label className="block text-[11px] text-blue-800 mb-1">USD/DZD</label>
-                          <input
-                            type="number"
-                            value={officialUSD}
-                            min="0"
-                            onChange={(e) => setOfficialUSD(parseFloat(e.target.value) || 0)}
-                            className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] text-blue-800 mb-1">EUR/DZD</label>
-                          <input
-                            type="number"
-                            value={officialEUR}
-                            min="0"
-                            onChange={(e) => setOfficialEUR(parseFloat(e.target.value) || 0)}
-                            className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
-                          />
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-blue-700 mt-2">
-                        {t.lastUpdate}: {lastUpdate}
-                      </p>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -1645,15 +1694,73 @@
 
     const root = ReactDOM.createRoot(document.getElementById('app'));
     root.render(<DzairCalculator />);
+
   </script>
 
-  <!-- PWA: service worker registration -->
+
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(() => console.log("Service Worker registered"))
-        .catch(err => console.log("SW registration failed", err));
-    }
-  </script>
-</body>
-</html>
+    (() => {
+      try {
+        const sourceEl = document.getElementById('app-source');
+        if (!sourceEl) {
+          throw new Error('App source not found');
+        }
+
+        const source = sourceEl.textContent;
+        const transformed = Babel.transform(source, {
+          presets: ['react'],
+          sourceType: 'script',
+        });
+
+        const runApp = new Function('React', 'ReactDOM', `${transformed.code}
+//# sourceURL=inline-app.jsx`);
+        runApp(React, ReactDOM);
+      } catch (err) {
+        console.error('App boot failed', err);
+        const mount = document.getElementById('app');
+        if (mount) {
+          mount.innerHTML = '<div class="max-w-2xl mx-auto mt-16 text-center text-red-600 font-semibold">' +
+            'Une erreur est survenue lors du chargement de l'application. Veuillez actualiser ou vérifier votre connexion.' +
+            '</div>';
+        }
+    })();
+        const compiledSource = transformed.code + "\n//# sourceURL=inline-app.jsx";
+        const runApp = new Function('React', 'ReactDOM', compiledSource);
+            "Une erreur est survenue lors du chargement de l'application. Veuillez actualiser ou vérifier votre connexion." +
+      const mount = document.getElementById('app');
+      const showError = (message) => {
+        if (!mount) return;
+        mount.innerHTML = '<div class="max-w-2xl mx-auto mt-16 text-center text-red-600 font-semibold">' + message + '</div>';
+      };
+
+      const boot = async () => {
+        try {
+          const babelLoader = window.loadBabelStandalone;
+          if (!babelLoader) {
+            throw new Error('Babel loader missing');
+          }
+          const Babel = await babelLoader();
+          if (!Babel) {
+            throw new Error('Babel failed to initialize');
+          }
+          const sourceEl = document.getElementById('app-source');
+          if (!sourceEl) {
+            throw new Error('App source not found');
+          }
+
+          const source = sourceEl.textContent;
+          const transformed = Babel.transform(source, {
+            presets: ['react'],
+            sourceType: 'script',
+          });
+
+          const compiledSource = transformed.code + "\n//# sourceURL=inline-app.jsx";
+          const runApp = new Function('React', 'ReactDOM', compiledSource);
+          runApp(React, ReactDOM);
+        } catch (err) {
+          console.error('App boot failed', err);
+          showError("Une erreur est survenue lors du chargement de l'application. Veuillez actualiser ou vérifier votre connexion. "+
+            (err && err.message ? `(${err.message})` : ''));
+      };
+
+      boot();
