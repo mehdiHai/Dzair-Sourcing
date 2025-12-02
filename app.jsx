@@ -1,0 +1,1645 @@
+const { useState, useCallback, useEffect } = React;
+
+    // --- Embedded PDF fonts (base64, avoids binary assets in the repo) ---
+    const DEJAVU_SANS_BASE64 = document.getElementById('dejavu-sans-regular').textContent.trim();
+    const DEJAVU_SANS_BOLD_BASE64 = document.getElementById('dejavu-sans-bold').textContent.trim();
+
+    const iconBaseProps = {
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+      strokeWidth: 1.8,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round'
+    };
+
+    const IconInfo = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <circle cx='12' cy='12' r='9' />
+        <line x1='12' y1='16' x2='12' y2='12' />
+        <circle cx='12' cy='8' r='0.8' />
+      </svg>
+    );
+
+    const IconLightbulb = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <path d='M9 18h6' />
+        <path d='M10 22h4' />
+        <path d='M9.5 14a4.5 4.5 0 1 1 5 0c-.5.35-.8.9-.8 1.5v.5h-3.4v-.5c0-.6-.3-1.15-.8-1.5Z' />
+      </svg>
+    );
+
+    const IconCar = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <path d='M5 16h14l-1-5.5a2 2 0 0 0-2-1.5H8a2 2 0 0 0-2 1.5Z' />
+        <path d='M5 16v2a1 1 0 0 0 1 1h1' />
+        <path d='M18 16v2a1 1 0 0 1-1 1h-1' />
+        <circle cx='7.5' cy='18.5' r='1' />
+        <circle cx='16.5' cy='18.5' r='1' />
+      </svg>
+    );
+
+    const IconShip = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <path d='M4 15h16l-2 6H6Z' />
+        <path d='M6 15V7l6-2 6 2v8' />
+        <path d='M6 11h12' />
+      </svg>
+    );
+
+    const IconClipboard = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <path d='M9 4h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z' />
+        <path d='M10 2h4v2h-4Z' />
+      </svg>
+    );
+
+    const IconChart = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <path d='M4 19h16' />
+        <rect x='6' y='10' width='3' height='7' rx='1' />
+        <rect x='11' y='7' width='3' height='10' rx='1' />
+        <rect x='16' y='12' width='3' height='5' rx='1' />
+      </svg>
+    );
+
+    const IconTax = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <circle cx='8.5' cy='8.5' r='1.5' />
+        <circle cx='15.5' cy='15.5' r='1.5' />
+        <path d='M6 18 18 6' />
+      </svg>
+    );
+
+    const IconShieldCheck = (props) => (
+      <svg {...iconBaseProps} {...props}>
+        <path d='M12 4 5 7v5c0 4.1 2.8 6.7 7 8 4.2-1.3 7-3.9 7-8V7Z' />
+        <path d='m9.5 12.5 2 2 3-3' />
+      </svg>
+    );
+
+    const translations = {
+      ar: {
+        title: 'Dzair Sourcing Cars',
+        subtitle: 'حاسبة تكلفة استيراد السيارات في الجزائر',
+        currency: 'العملة',
+        usd: 'دولار أمريكي',
+        eur: 'يورو',
+        vehicleInfo: 'معلومات السيارة',
+        carPrice: 'سعر السيارة (FOB)',
+        vehicleAge: 'حالة السيارة',
+        brandNew: 'جديدة (0 كم)',
+        usedUnder3: 'مستعملة (أقل من 3 سنوات)',
+        engineType: 'نوع المحرك',
+        electric: 'كهربائي',
+        gasolineSmall: 'بنزين ≤1800 سم³',
+        gasolineLarge: 'بنزين >1800 سم³',
+        hybridSmall: 'هجين ≤1800 سم³',
+        hybridLarge: 'هجين >1800 سم³',
+        foreignCosts: 'التكاليف بالعملة الأجنبية',
+        freightInsurance: 'الشحن + التأمين',
+        localCosts: 'التكاليف المحلية (DZD)',
+        inspection: 'رسوم الفحص',
+        documentation: 'رسوم الوثائق',
+        portBroker: 'حقوق الميناء والمخلص',
+        exchangeRates: 'أسعار الصرف',
+        officialRate: 'السعر الرسمي',
+        blackMarketRate: 'السعر الموازي',
+        lastUpdate: 'آخر تحديث',
+        manualRateEntry: 'إدخال يدوي (دينار لكل عملة)',
+        results: 'تفاصيل التكلفة',
+        fobPrice: 'سعر الشراء (FOB)',
+        atBlackRate: 'بسعر السوق الموازي',
+        freightCost: 'الشحن + التأمين',
+        otherFees: 'رسوم أخرى',
+        customsCIF: 'قيمة CIF الجمركية',
+        atOfficialRate: 'بالسعر الرسمي',
+        forTaxCalc: '(تُستخدم لحساب الرسوم الجمركية)',
+        customsRights: 'الرسوم الجمركية',
+        customsTaxes: 'الرسوم الجمركية',
+        onCIF: 'على قيمة CIF',
+        combinedRate: 'معدل مجمّع',
+        discount: 'تخفيض',
+        baseRate: 'المعدل الأساسي',
+        finalRate: 'المعدل بعد التخفيض',
+        dd: 'حقوق الجمركة (DD)',
+        tcs: 'رسم التضامن (TCS)',
+        tva: 'الرسم على القيمة المضافة (TVA)',
+        newCarTax: 'قسيمة السيارات الجديدة',
+        notApplicable: 'غير مطبَّقة',
+        saved: 'توفير',
+        totalCustoms: 'إجمالي الرسوم الجمركية',
+        totalCost: 'التكلفة الإجمالية',
+        twoRateExplain: 'نظام السعرين',
+        blackMarketInfo: 'يُستخدم لحساب تكلفة الشراء والشحن الفعلية',
+        officialInfo: 'يُستخدم من طرف الجمارك لحساب الرسوم',
+        enterPrice: 'أدخل سعر السيارة لرؤية الحساب',
+        legalRef: 'المراجع القانونية',
+        decree: 'المرسوم 23-74 (20 فبراير 2023)',
+        article: 'المادة 110 من قانون المالية 2020',
+        cifFormula: 'CIF = سعر السيارة + الشحن + التأمين',
+        douaneSite: 'الموقع الرسمي للجمارك الجزائرية',
+        savingsBannerPrefix: 'يمكنك توفير ما لا يقل عن',
+        savingsBannerSuffix: 'عند اختيار سيارة مستعملة بدلًا من الجديدة.',
+        savingsBannerInfo: 'معظم الزبائن يختارون السيارات المستعملة لتفادي 150 000 دج الخاصة بالسيارات الجديدة والاستفادة من رسوم جمركية أقل.',
+        newCarPromoPrefix: 'يمكنك توفير تقريبًا',
+        newCarPromoSuffix: 'إذا اخترت سيارة مستعملة بدلًا من الجديدة.',
+        footerRights: 'جميع الحقوق محفوظة',
+        resaleTitle: 'إعادة البيع وامتياز السيارة المستعملة (قانون المالية لسنة 2025)',
+        resaleAdvantageAmount: 'قيمة الامتياز الجبائي على السيارة المستعملة',
+        resaleRefundAmount: 'المبلغ الواجب إرجاعه للدولة',
+        resaleRefundNone: 'لا يوجد إرجاع بعد 36 شهراً من الجمركة',
+        resaleRefundFull: 'إعادة بيع في ≤ 12 شهراً: إرجاع 100٪ من الامتياز',
+        resaleRefund66: 'إعادة بيع بين 12 و24 شهراً: إرجاع 66٪ من الامتياز',
+        resaleRefund33: 'إعادة بيع بين 24 و36 شهراً: إرجاع 33٪ من الامتياز',
+        resaleLawNote: 'وفقاً لقانون المالية لسنة 2025، بيع سيارة أقل من 3 سنوات قبل مرور 36 شهراً من الجمركة يفرض استرجاع جزء أو كل الامتياز الجبائي المرتبط بالتخفيض على حقوق الجمركة.',
+        resaleSavedLabel: 'الامتياز المتبقي بعد الإرجاع',
+        resaleRiskTitle: 'مستوى الخطر الجبائي عند إعادة البيع',
+        resaleRiskHigh: 'خطر مرتفع جداً (استرجاع 100٪ من الامتياز)',
+        resaleRiskMedium: 'خطر متوسط (استرجاع 66٪ من الامتياز)',
+        resaleRiskLow: 'خطر ضعيف (استرجاع 33٪ من الامتياز)',
+        resaleRiskNone: 'لا يوجد استرجاع (بعد 36 شهراً)',
+        resaleTimelineTitle: 'جدول زمني مبسط لقانون المالية 2025',
+        resaleTimeline0_12: 'من 0 إلى 12 شهر: استرجاع 100٪ من الامتياز الجبائي',
+        resaleTimeline12_24: 'من 12 إلى 24 شهر: استرجاع 66٪ من الامتياز الجبائي',
+        resaleTimeline24_36: 'من 24 إلى 36 شهر: استرجاع 33٪ من الامتياز الجبائي',
+        resaleTimelineAfter36: 'بعد 36 شهر: لا يوجد استرجاع للامتياز الجبائي',
+        resalePeriodLabel: 'فترة إعادة البيع (قانون المالية 2025)',
+        pdfDownload: 'تحميل تقرير PDF مفصل',
+        pdfSubtitle: 'نسخة للطباعة للبنك أو الجمارك أو الزبون',
+        terminologyTitle: 'المصطلحات والاختصارات',
+        termCIF: 'CIF',
+        termCIFDesc: 'التكلفة + التأمين + الشحن (القيمة التي تعتمدها الجمارك)',
+        termFOB: 'FOB',
+        termFOBDesc: 'قيمة المركبة بدون نقل أو تأمين',
+        termDD: 'DD',
+        termDDDesc: 'حقوق الجمركة المحسوبة على قيمة CIF',
+        termTCS: 'TCS',
+        termTCSDesc: 'رسم التضامن (3٪ من قيمة CIF)',
+        termTVA: 'TVA',
+        termTVADesc: 'الضريبة على القيمة المضافة بعد DD وTCS'
+      },
+      fr: {
+        title: 'Dzair Sourcing Cars',
+        subtitle: "Calculateur de Coût d'Importation de Véhicules en Algérie",
+        currency: 'Devise',
+        usd: 'Dollar US',
+        eur: 'Euro',
+        vehicleInfo: 'Informations du Véhicule',
+        carPrice: 'Prix du véhicule (FOB)',
+        vehicleAge: 'État du véhicule',
+        brandNew: 'Neuf (0 km)',
+        usedUnder3: 'Occasion (moins de 3 ans)',
+        engineType: 'Type de moteur',
+        electric: 'Électrique',
+        gasolineSmall: 'Essence ≤1800 cm³',
+        gasolineLarge: 'Essence >1800 cm³',
+        hybridSmall: 'Hybride ≤1800 cm³',
+        hybridLarge: 'Hybride >1800 cm³',
+        foreignCosts: 'Coûts en Devise Étrangère',
+        freightInsurance: 'Fret + Assurance',
+        localCosts: 'Coûts Locaux (DZD)',
+        inspection: "Frais d'inspection",
+        documentation: 'Frais de documentation',
+        portBroker: 'Droits de port + Transitaire',
+        exchangeRates: 'Taux de Change',
+        officialRate: 'Taux Officiel',
+        blackMarketRate: 'Taux Parallèle',
+        lastUpdate: 'Dernière mise à jour',
+        manualRateEntry: 'Saisie manuelle (DZD par devise)',
+        results: 'Détail des Coûts',
+        fobPrice: "Prix d'achat (FOB)",
+        atBlackRate: 'au taux parallèle',
+        freightCost: 'Fret + Assurance',
+        otherFees: 'Autres frais',
+        customsCIF: 'Valeur CIF Douanière',
+        atOfficialRate: 'au taux officiel',
+        forTaxCalc: '(utilisé pour le calcul des droits de douane)',
+        customsRights: 'Droits de Douane',
+        customsTaxes: 'Taxes Douanières',
+        onCIF: 'sur CIF',
+        combinedRate: 'Taux combiné',
+        discount: 'Réduction',
+        baseRate: 'Taux de base',
+        finalRate: 'Taux final',
+        dd: 'Droits de Douane (DD)',
+        tcs: 'Taxe de Solidarité (TCS)',
+        tva: 'TVA',
+        newCarTax: 'Vignette Véhicule Neuf',
+        notApplicable: 'Non applicable',
+        saved: 'Économisé',
+        totalCustoms: 'Total Droits de Douane',
+        totalCost: 'Coût Total',
+        twoRateExplain: 'Système à Deux Taux',
+        blackMarketInfo: "Utilisé pour les coûts réels d'achat et d'expédition",
+        officialInfo: 'Utilisé par les douanes pour calculer les droits',
+        enterPrice: "Entrez le prix du véhicule pour voir le calcul",
+        legalRef: 'Références Légales',
+        decree: 'Décret 23-74 (20 février 2023)',
+        article: 'Article 110 de la Loi de Finances 2020',
+        cifFormula: 'CIF = Prix véhicule + Fret + Assurance',
+        douaneSite: 'Site officiel de la Douane Algérienne',
+        savingsBannerPrefix: 'Économisez au moins',
+        savingsBannerSuffix: "en choisissant un véhicule d'occasion.",
+        savingsBannerInfo: 'La majorité des clients choisissent une voiture d’occasion pour éviter la vignette de 150 000 DZD et bénéficier de taux de douane plus faibles.',
+        newCarPromoPrefix: 'Vous pouvez économiser environ',
+        newCarPromoSuffix: "en choisissant un véhicule d’occasion plutôt qu’un véhicule neuf.",
+        footerRights: 'Tous droits réservés',
+        resaleTitle: 'Avantage fiscal véhicule d’occasion & revente (Loi de Finances 2025)',
+        resaleAdvantageAmount: 'Avantage fiscal obtenu sur la voiture d’occasion',
+        resaleRefundAmount: 'Montant à reverser à l’État',
+        resaleRefundNone: 'Aucun reversement après 36 mois de douane',
+        resaleRefundFull: 'Revente ≤ 12 mois : reversement 100 % de l’avantage',
+        resaleRefund66: 'Revente entre 12 et 24 mois : reversement 66 % de l’avantage',
+        resaleRefund33: 'Revente entre 24 et 36 mois : reversement 33 % de l’avantage',
+        resaleLawNote: 'Conformément à la Loi de Finances pour l’année 2025, la revente d’un véhicule de moins de 3 ans avant 36 mois impose la restitution totale ou partielle de l’avantage fiscal lié à la réduction sur les droits de douane.',
+        resaleSavedLabel: 'Avantage conservé après reversement',
+        resaleRiskTitle: 'Niveau de risque fiscal en cas de revente',
+        resaleRiskHigh: 'Risque ÉLEVÉ (100 % de l’avantage à reverser)',
+        resaleRiskMedium: 'Risque MOYEN (66 % de l’avantage à reverser)',
+        resaleRiskLow: 'Risque FAIBLE (33 % de l’avantage à reverser)',
+        resaleRiskNone: 'Aucun reversement exigé (après 36 mois)',
+        resaleTimelineTitle: 'Frise chronologique – Loi de Finances 2025',
+        resaleTimeline0_12: '0 à 12 mois : reversement 100 % de l’avantage fiscal',
+        resaleTimeline12_24: '12 à 24 mois : reversement 66 % de l’avantage fiscal',
+        resaleTimeline24_36: '24 à 36 mois : reversement 33 % de l’avantage fiscal',
+        resaleTimelineAfter36: 'Après 36 mois : aucun reversement de l’avantage fiscal',
+        resalePeriodLabel: 'Période de revente (Loi de Finances 2025)',
+        pdfDownload: 'Télécharger le rapport PDF détaillé',
+        pdfSubtitle: 'Version imprimable pour banque, douane ou client',
+        terminologyTitle: 'Terminologie & Sigles',
+        termCIF: 'CIF',
+        termCIFDesc: 'Coût + Assurance + Fret (valeur utilisée par la douane)',
+        termFOB: 'FOB',
+        termFOBDesc: 'Valeur du véhicule hors transport et assurance',
+        termDD: 'DD',
+        termDDDesc: 'Droits de Douane calculés sur la valeur CIF',
+        termTCS: 'TCS',
+        termTCSDesc: 'Taxe de solidarité (3 % du CIF)',
+        termTVA: 'TVA',
+        termTVADesc: 'Taxe sur la valeur ajoutée calculée après DD et TCS'
+      },
+      tz: {
+        title: 'Dzair Sourcing Cars',
+        subtitle: 'Amessiḍen n wezwi n tkerrust di Lezzayer',
+        currency: 'Tadrimt',
+        usd: 'Adular US',
+        eur: 'Uru',
+        vehicleInfo: 'Talɣut ɣef tkerrust',
+        carPrice: 'Azal n tkerrust (FOB)',
+        vehicleAge: 'Addad n tkerrust',
+        brandNew: 'Tamaynut (0 km)',
+        usedUnder3: 'Tusniwin (ddaw 3 n iseggasen)',
+        engineType: 'Anaw n umsedday',
+        electric: 'Elektrik',
+        gasolineSmall: 'Lisans ≤1800 cm³',
+        gasolineLarge: 'Lisans >1800 cm³',
+        hybridSmall: 'Ahybrid ≤1800 cm³',
+        hybridLarge: 'Ahybrid >1800 cm³',
+        foreignCosts: 'Idrimen s tedrimt tabeṛṛanit',
+        freightInsurance: 'Asiweḍ + tasertit',
+        localCosts: 'Idrimen idigan (DZD)',
+        inspection: 'Idrimen n usenqed',
+        documentation: 'Idrimen n isemliyen',
+        portBroker: 'Izerfan n umaẓ + amεessas',
+        exchangeRates: 'Azalen n usnifel',
+        officialRate: 'Azal unṣib',
+        blackMarketRate: 'Azal azeggan',
+        lastUpdate: 'Aleqqem aneggaru',
+        manualRateEntry: 'Asekcem awfus (DZD i yal tawacult)',
+        results: 'Talɣut n wezwi',
+        fobPrice: 'Azal n usɣ (FOB)',
+        atBlackRate: 's uzal azeggan',
+        freightCost: 'Asiweḍ + tasertit',
+        otherFees: 'Idrimen nniḍen',
+        customsCIF: 'Azal CIF n lmerk',
+        atOfficialRate: 's uzal unṣib',
+        forTaxCalc: '(yettuseqdac i ussiḍen n izerfan)',
+        customsRights: 'Izerfan n lmerk',
+        customsTaxes: 'Tiwsitin n lmerk',
+        onCIF: 'ɣef CIF',
+        combinedRate: 'Azal amseddu',
+        discount: 'Asenqes',
+        baseRate: 'Azal ameslaw',
+        finalRate: 'Azal aneggaru',
+        dd: 'Izerfan n lmerk (DD)',
+        tcs: 'Tawsit n tiddukla (TCS)',
+        tva: 'TVA',
+        newCarTax: 'Taneɣruft n tkerrust tamaynut',
+        notApplicable: 'Ur tettwasnas ara',
+        saved: 'Yettwaseḥres',
+        totalCustoms: 'Amḍan n izerfan',
+        totalCost: 'Amḍan umulli',
+        twoRateExplain: 'Anagraw n sin yizulay',
+        blackMarketInfo: 'Yettuseqdac i wezwi n usɣ d usiweḍ',
+        officialInfo: 'Yettuseqdac sɣur lmerk i ussiḍen n izerfan',
+        enterPrice: 'Sekcem azal n tkerrust',
+        legalRef: 'Tiselkimin tizerfiyin',
+        decree: 'Amgired 23-74 (20 fuṛar 2023)',
+        article: 'Amagrad 110 n usaḍuf n tedrimt 2020',
+        cifFormula: 'CIF = azal + asiweḍ + tasertit',
+        douaneSite: 'Asmel unṣib n lmerk Lezzayer',
+        savingsBannerPrefix: 'Tzemreḍ ad tesɛuḍ ma drus',
+        savingsBannerSuffix: 'ma tferneḍ tkerrust tusniwin deg umkan n tamaynut.',
+        savingsBannerInfo: 'Ugar n yimessaɣen frekneḍ tusniwin akken ad rwen 150 000 DZD n tkerrust tamaynut yerna ad senḥun azrefen n lmerk.',
+        newCarPromoPrefix: 'Tzemreḍ ad tesɛuḍ approx.',
+        newCarPromoSuffix: 'ma tferneḍ tusniwin deg umkan n tkerrust tamaynut.',
+        footerRights: 'Izerfan akk ttwahfaḍen',
+        resaleTitle: 'Tallalt n tkerrust tusniwin & aznuzu (Usɣel n Tedrimt 2025)',
+        resaleAdvantageAmount: 'Tallalt n tazərft ɣef tkerrust tusniwin',
+        resaleRefundAmount: 'Tazmilt ara d-tettuɣal i teɣdudant',
+        resaleRefundNone: 'Ulac tazmilt seld 36 n wagguren',
+        resaleRefundFull: 'Aznuzu ≤ 12 ayowr: tuɣalin 100% n tallalt',
+        resaleRefund66: 'Aznuzu gar 12 d 24 ayowr: tuɣalin 66% n tallalt',
+        resaleRefund33: 'Aznuzu gar 24 d 36 ayowr: tuɣalin 33% n tallalt',
+        resaleLawNote: 'S usɣel n Tedrimt 2025: aznuzu n tkerust ddaw 3 iseggasen send 36 ayowr yesra tuɣalin n tallalt n tazərft i d-yeffɣen seg usenqes ɣef izerfan n lmerk.',
+        resaleSavedLabel: 'Tallalt i d-yeqqimen seld tuɣalin',
+        resaleRiskTitle: 'Aswir n wugur n tazmilt',
+        resaleRiskHigh: 'Uguren meqqren (100% n tallalt ad tettwaɣelsent)',
+        resaleRiskMedium: 'Uguren alemmas (66% n tallalt ad tettwaɣelsent)',
+        resaleRiskLow: 'Uguren meẓẓiyen (33% n tallalt ad tettwaɣelsent)',
+        resaleRiskNone: 'Ulac aɣelsan seld 36 n wagguren',
+        resaleTimelineTitle: 'Akud n uznuzu – Usɣel n Tedrimt 2025',
+        resaleTimeline0_12: '0–12 ayowr: aɣelsan 100% n tallalt',
+        resaleTimeline12_24: '12–24 ayowr: aɣelsan 66% n tallalt',
+        resaleTimeline24_36: '24–36 ayowr: aɣelsan 33% n tallalt',
+        resaleTimelineAfter36: 'Seld 36 ayowr: ulac aɣelsan',
+        resalePeriodLabel: 'Talla n uznuzu (Usɣel n Tedrimt 2025)',
+        pdfDownload: 'Sider rapport PDF ummuggar',
+        pdfSubtitle: 'Tawsit i usiggez, tabanka neɣ lmerk',
+        terminologyTitle: 'Isemaden d yizemlen',
+        termCIF: 'CIF',
+        termCIFDesc: 'Azal + tasertit + asiweḍ i yettuseqdacen sɣur lmerk',
+        termFOB: 'FOB',
+        termFOBDesc: 'Azal n tkerrust war asiweḍ neɣ tasertit',
+        termDD: 'DD',
+        termDDDesc: 'Izerfan n lmerk ittwasenqen ɣef CIF',
+        termTCS: 'TCS',
+        termTCSDesc: 'Tawsit n tiddukla (3% n CIF)',
+        termTVA: 'TVA',
+        termTVADesc: 'TVA tettwasḥebbes seld DD d TCS'
+      }
+    };
+
+    /* ------------ Tax rates ------------ */
+
+    // Used car final rates (combined)
+    const usedCarTaxRates = {
+      electric: { baseRate: 57.08, discount: 80, finalRate: 11.42 },
+      gasolineSmall: { baseRate: 39.23, discount: 50, finalRate: 19.62 },
+      gasolineLarge: { baseRate: 151.33, discount: 20, finalRate: 121.06 },
+      hybridSmall: { baseRate: 39.23, discount: 50, finalRate: 19.62 },
+      hybridLarge: { baseRate: 151.33, discount: 20, finalRate: 121.06 }
+    };
+
+    // New car DD rates only (TCS & TVA fixed)
+    const newCarDdRates = {
+      electric: 30,        // EV
+      gasolineSmall: 15,   // Essence ≤1800
+      gasolineLarge: 30,   // Essence >1800
+      hybridSmall: 15,     // Hybride ≤1800
+      hybridLarge: 30      // Hybride >1800
+    };
+
+    const TAX_TCS = 3;
+    const TAX_TVA = 19;
+    const NEW_CAR_VIGNETTE = 150000;
+
+    const defaultRates = {
+      officialUSD: 135.5,
+      officialEUR: 145.3,
+      blackUSD: 232,
+      blackEUR: 250
+    };
+
+    const formatNumber = (num) =>
+      new Intl.NumberFormat('fr-DZ').format(Math.round(num || 0));
+
+    const toNumber = (value) => parseFloat(value) || 0;
+
+    const formatCurrency = (num, curr = 'DZD') => {
+      if (curr === 'DZD') return `${formatNumber(num)} DZD`;
+      const symbol = curr === 'USD' ? '$' : '€';
+      return `${symbol}${formatNumber(num)}`;
+    };
+
+    /* ------------ Main component ------------ */
+
+    function DzairCalculator() {
+      const [lang, setLang] = useState('fr');
+      const [currency, setCurrency] = useState('USD');
+      const [vehicleAge, setVehicleAge] = useState('used');
+      const [engineType, setEngineType] = useState('gasolineSmall');
+      const [carPrice, setCarPrice] = useState('');
+      const [freightInsurance, setFreightInsurance] = useState('');
+      const [inspection, setInspection] = useState('15000');
+      const [documentation, setDocumentation] = useState('10000');
+      const [portBroker, setPortBroker] = useState('150000');
+      const [officialUSD, setOfficialUSD] = useState(defaultRates.officialUSD);
+      const [officialEUR, setOfficialEUR] = useState(defaultRates.officialEUR);
+      const [blackUSD, setBlackUSD] = useState(defaultRates.blackUSD);
+      const [blackEUR, setBlackEUR] = useState(defaultRates.blackEUR);
+      const [results, setResults] = useState(null);
+      const [showResults, setShowResults] = useState(false);
+      const [potentialUsedSavings, setPotentialUsedSavings] = useState(0);
+
+      // Nouvelle logique : période de revente (au lieu de nombre de mois)
+      // 0_12, 12_24, 24_36 = périodes taxables, after_36 = aucun reversement
+      const [resalePeriod, setResalePeriod] = useState('24_36');
+
+      const t = translations[lang];
+      const isRTL = lang === 'ar';
+
+      const engineButtons = [
+        { value: 'electric', label: translations[lang].electric, rateUsed: '11.42%' },
+        { value: 'gasolineSmall', label: translations[lang].gasolineSmall, rateUsed: '19.62%' },
+        { value: 'gasolineLarge', label: translations[lang].gasolineLarge, rateUsed: '121.06%' },
+        { value: 'hybridSmall', label: translations[lang].hybridSmall, rateUsed: '19.62%' },
+        { value: 'hybridLarge', label: translations[lang].hybridLarge, rateUsed: '121.06%' }
+      ];
+
+      const calculate = useCallback(() => {
+        // Collect numeric inputs with safe defaults to avoid NaN propagation
+        const price = toNumber(carPrice);
+        const freight = toNumber(freightInsurance);
+        const inspectionFee = toNumber(inspection);
+        const docFee = toNumber(documentation);
+        const portFee = toNumber(portBroker);
+
+        const blackRate = currency === 'USD' ? blackUSD : blackEUR;
+        const officialRate = currency === 'USD' ? officialUSD : officialEUR;
+
+        if (!price) {
+          setShowResults(false);
+          setResults(null);
+          setPotentialUsedSavings(0);
+          return;
+        }
+
+        // Convert to DZD using chosen rates; customs (CIF) must use the official rate
+        const fobDZD = price * blackRate;
+        const freightDZD = freight * blackRate;
+        const localExpenses = inspectionFee + docFee + portFee;
+        const cifCustoms = (price + freight) * officialRate;
+
+        let taxes = {};
+        let totalTax = 0;
+        let newCarTaxAmount = 0;
+        let usedCarTaxPreview = 0;
+        let taxAdvantageAmount = 0;
+        let taxAdvantageRate = 0;
+
+        if (vehicleAge === 'new') {
+          // New vehicles: DD + TCS + TVA + vignette applied to CIF base
+          const ddRate = newCarDdRates[engineType] || 0;
+          const dd = cifCustoms * (ddRate / 100);
+          const tcs = cifCustoms * (TAX_TCS / 100);
+          const tva = (cifCustoms + dd + tcs) * (TAX_TVA / 100);
+
+          newCarTaxAmount = NEW_CAR_VIGNETTE;
+          totalTax = dd + tcs + tva;
+
+          taxes = {
+            dd,
+            tcs,
+            tva,
+            ddRate,
+            tcsRate: TAX_TCS,
+            tvaRate: TAX_TVA,
+            breakdown: true
+          };
+
+          const rateInfo = usedCarTaxRates[engineType];
+          if (rateInfo) {
+            usedCarTaxPreview = cifCustoms * (rateInfo.finalRate / 100);
+            const potential = totalTax + newCarTaxAmount - usedCarTaxPreview;
+            setPotentialUsedSavings(potential > 0 ? potential : 0);
+          } else {
+            setPotentialUsedSavings(0);
+          }
+          taxAdvantageAmount = 0;
+          taxAdvantageRate = 0;
+        } else {
+          const rateInfo = usedCarTaxRates[engineType];
+          if (rateInfo) {
+            totalTax = cifCustoms * (rateInfo.finalRate / 100);
+            const advantageRate = rateInfo.baseRate - rateInfo.finalRate;
+            taxAdvantageAmount = cifCustoms * (advantageRate / 100);
+            taxAdvantageRate = advantageRate;
+
+            taxes = {
+              baseRate: rateInfo.baseRate,
+              discount: rateInfo.discount,
+              finalRate: rateInfo.finalRate,
+              breakdown: false
+            };
+          }
+          newCarTaxAmount = 0;
+          setPotentialUsedSavings(0);
+        }
+
+        const total = fobDZD + freightDZD + localExpenses + totalTax + newCarTaxAmount;
+
+        setResults({
+          price,
+          freight,
+          fobDZD,
+          freightDZD,
+          inspectionFee,
+          docFee,
+          portFee,
+          localExpenses,
+          cifCustoms,
+          taxes,
+          totalTax,
+          newCarTaxAmount,
+          total,
+          blackRate,
+          officialRate,
+          usedCarTaxPreview,
+          taxAdvantageAmount,
+          taxAdvantageRate
+        });
+        setShowResults(true);
+      }, [
+        carPrice, freightInsurance, inspection, documentation, portBroker,
+        currency, blackUSD, blackEUR, officialUSD, officialEUR, vehicleAge, engineType
+      ]);
+
+      useEffect(() => {
+        if (carPrice) calculate();
+      }, [
+        carPrice, freightInsurance, inspection, documentation, portBroker,
+        currency, blackUSD, blackEUR, officialUSD, officialEUR, vehicleAge, engineType, calculate
+      ]);
+
+      useEffect(() => {
+        document.documentElement.lang = lang;
+      }, [lang]);
+
+      const containerClass = isRTL ? 'rtl' : 'ltr';
+
+      // --- LF 2025 resale computation (avec périodes de revente) ---
+      const resaleInfo = (() => {
+        if (!results || vehicleAge !== 'used') return null;
+
+        const advantage = results.taxAdvantageAmount || 0;
+        let rate = 0;
+        let labelKey = 'resaleRefundNone';
+
+        switch (resalePeriod) {
+          case '0_12':
+            rate = 1;
+            labelKey = 'resaleRefundFull';
+            break;
+          case '12_24':
+            rate = 0.66;
+            labelKey = 'resaleRefund66';
+            break;
+          case '24_36':
+            rate = 0.33;
+            labelKey = 'resaleRefund33';
+            break;
+          case 'after_36':
+          default:
+            rate = 0;
+            labelKey = 'resaleRefundNone';
+            break;
+        }
+
+        const refund = advantage * rate;
+        const keep = advantage - refund;
+
+        return { rate, refund, keep, labelKey, advantage };
+      })();
+
+      // --- Risk label for resale ---
+      const resaleRiskText = (() => {
+        if (!resaleInfo) return '';
+        const r = resaleInfo.rate;
+        if (r >= 0.99) return t.resaleRiskHigh;
+        if (r > 0.5) return t.resaleRiskMedium;
+        if (r > 0) return t.resaleRiskLow;
+        return t.resaleRiskNone;
+      })();
+
+      // Libellé période pour le PDF
+      const resalePeriodLabel = (() => {
+        switch (resalePeriod) {
+          case '0_12':
+            return t.resaleTimeline0_12;
+          case '12_24':
+            return t.resaleTimeline12_24;
+          case '24_36':
+            return t.resaleTimeline24_36;
+          case 'after_36':
+          default:
+            return t.resaleTimelineAfter36;
+        }
+      })();
+
+      // --- PDF Export (premium layout + logo) ---
+      const exportPDF = useCallback(async () => {
+        if (!results) return;
+
+        const jsPdfGlobal = window.jspdf || window.jsPDF;
+        const jsPDF = jsPdfGlobal && jsPdfGlobal.jsPDF ? jsPdfGlobal.jsPDF : jsPdfGlobal;
+
+        if (!jsPDF) {
+          alert('PDF non disponible dans ce navigateur.');
+          return;
+        }
+
+        const generate = async (logoImg) => {
+          const doc = new jsPDF('p', 'mm', 'a4');
+          await ensurePdfFonts(doc);
+          doc.setFont('DejaVuSans', 'normal');
+          const marginX = 16;
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const contentWidth = pageWidth - marginX * 2;
+          let y = 20;
+
+          const exportDate = new Intl.DateTimeFormat(lang === 'ar' ? 'ar-DZ' : 'fr-DZ', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+          }).format(new Date());
+
+          const totalInCurrency = results.officialRate
+            ? formatCurrency(results.total / results.officialRate, currency)
+            : formatCurrency(results.total, currency);
+
+          const ensureSpace = (needed = 0) => {
+            const bottomMargin = 18;
+            if (y + needed > pageHeight - bottomMargin) {
+              doc.addPage();
+              y = 18;
+            }
+          };
+
+          const engineLabel = (engineButtons.find(b => b.value === engineType)?.label) || engineType;
+          const vehicleAgeLabel = vehicleAge === 'new' ? t.brandNew : t.usedUnder3;
+
+          const addSectionTitle = (index, label) => {
+            ensureSpace(18);
+            doc.setFillColor(0, 98, 51);
+            doc.setDrawColor(0, 98, 51);
+            doc.setTextColor(255);
+            doc.roundedRect(marginX, y, contentWidth, 10, 2, 2, 'FD');
+            doc.setFont('DejaVuSans', 'bold');
+            doc.setFontSize(11.5);
+            doc.text(`${index}. ${label}`, marginX + 4, y + 6.8);
+            y += 14;
+            doc.setFont('DejaVuSans', 'normal');
+            doc.setTextColor(32);
+          };
+
+          const addKeyValueRow = (label, value) => {
+            doc.setFont('DejaVuSans', 'normal');
+            doc.setFontSize(10.5);
+            const labelLines = doc.splitTextToSize(`• ${label}`, contentWidth * 0.6);
+            const rowHeight = Math.max(labelLines.length * 5, 7);
+            ensureSpace(rowHeight + 6);
+            doc.setTextColor(55);
+            doc.text(labelLines, marginX, y + 4.8);
+            doc.setFont('DejaVuSans', 'bold');
+            doc.setTextColor(20);
+            doc.text(value, pageWidth - marginX, y + 4.8, { align: 'right' });
+            doc.setFont('DejaVuSans', 'normal');
+            doc.setTextColor(32);
+            y += rowHeight + 4;
+          };
+
+          const addParagraph = (text, color = [60, 60, 60]) => {
+            doc.setFont('DejaVuSans', 'normal');
+            doc.setFontSize(9.5);
+            doc.setTextColor(...color);
+            const lines = doc.splitTextToSize(text, contentWidth);
+            ensureSpace(lines.length * 4.6 + 5);
+            doc.text(lines, marginX, y);
+            y += lines.length * 4.6 + 3;
+            doc.setTextColor(30);
+          };
+
+          const addSummaryCard = () => {
+            ensureSpace(26);
+            doc.setFillColor(245, 248, 250);
+            doc.setDrawColor(0, 98, 51);
+            doc.setLineWidth(0.35);
+            doc.roundedRect(marginX, y - 3, contentWidth, 24, 2, 2, 'FD');
+
+            doc.setFont('DejaVuSans', 'bold');
+            doc.setFontSize(12);
+            doc.setTextColor(0, 98, 51);
+            doc.text(t.results, marginX + 4, y + 5);
+            doc.text(formatCurrency(results.total), pageWidth - marginX - 4, y + 5, { align: 'right' });
+
+            doc.setFont('DejaVuSans', 'normal');
+            doc.setFontSize(9.5);
+            doc.setTextColor(60);
+            doc.text(`${t.totalCost} (${currency})`, marginX + 4, y + 12.5);
+            doc.setFont('DejaVuSans', 'bold');
+            doc.setTextColor(30);
+            doc.text(totalInCurrency, pageWidth - marginX - 4, y + 12.5, { align: 'right' });
+
+            doc.setFont('DejaVuSans', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(95);
+            doc.text(`${t.lastUpdate}: ${exportDate}`, marginX + 4, y + 19);
+            doc.text(
+              `${t.officialRate}: ${formatNumber(results.officialRate)} DZD/${currency}`,
+              pageWidth - marginX - 4,
+              y + 19,
+              { align: 'right' }
+            );
+
+            doc.setLineWidth(0.2);
+            doc.setTextColor(30);
+            y += 26;
+          };
+
+          // Header avec logo (centré et aéré)
+          const logoSize = 16;
+          if (logoImg) {
+            try {
+              doc.addImage(logoImg, 'PNG', marginX, y - 4, logoSize, logoSize);
+            } catch (e) {
+              // si souci avec l'image, on continue sans casser le PDF
+            }
+          }
+
+          doc.setFont('DejaVuSans', 'bold');
+          doc.setFontSize(16.5);
+          doc.setTextColor(0, 98, 51);
+          doc.text(t.title, marginX + logoSize + 6, y + 2);
+          doc.setFont('DejaVuSans', 'normal');
+          doc.setFontSize(10.5);
+          doc.setTextColor(85);
+          doc.text(t.subtitle, marginX + logoSize + 6, y + 9);
+
+          y += 22;
+
+          addSummaryCard();
+
+          addSectionTitle(1, 'Résumé du véhicule et de l’opération');
+          addKeyValueRow(t.vehicleAge, vehicleAgeLabel);
+          addKeyValueRow(t.engineType, engineLabel);
+          addKeyValueRow(t.carPrice, `${formatCurrency(results.price, currency)} (${currency})`);
+          addKeyValueRow(t.freightCost, `${formatCurrency(results.freight, currency)} (${currency})`);
+
+          addSectionTitle(2, 'Coût global détaillé (en DZD)');
+          [
+            { label: t.fobPrice, value: formatCurrency(results.fobDZD) },
+            { label: t.freightCost, value: formatCurrency(results.freightDZD) },
+            { label: t.otherFees, value: formatCurrency(results.localExpenses) },
+            { label: t.customsCIF, value: formatCurrency(results.cifCustoms) },
+            { label: t.customsRights, value: formatCurrency(results.totalTax) },
+            ...(results.newCarTaxAmount > 0 ? [{ label: t.newCarTax, value: formatCurrency(results.newCarTaxAmount) }] : []),
+            { label: t.totalCost, value: formatCurrency(results.total) },
+          ].forEach(item => addKeyValueRow(item.label, item.value));
+
+          doc.setFontSize(9.5);
+          doc.setTextColor(90);
+          ensureSpace(14);
+          doc.roundedRect(marginX, y - 2.5, contentWidth, 11, 2, 2, 'S');
+          doc.text(
+            `${t.blackMarketRate}: ${formatNumber(results.blackRate)} DZD/${currency}`,
+            marginX + 2.5,
+            y + 2
+          );
+          doc.text(
+            `${t.officialRate}: ${formatNumber(results.officialRate)} DZD/${currency}`,
+            pageWidth - marginX - 2.5,
+            y + 2,
+            { align: 'right' }
+          );
+          y += 14;
+
+          if (vehicleAge === 'used' && resaleInfo && results.taxAdvantageAmount > 0) {
+            addSectionTitle(3, 'Avantage fiscal sur véhicule d’occasion');
+            addKeyValueRow(t.resaleAdvantageAmount, formatCurrency(resaleInfo.advantage));
+            addKeyValueRow(`${t.baseRate}`, `${formatNumber(results.taxes.baseRate)}%`);
+            addKeyValueRow(`${t.finalRate}`, `${formatNumber(results.taxes.finalRate)}%`);
+          }
+
+          if (vehicleAge === 'used' && resaleInfo) {
+            addSectionTitle(4, 'Loi de Finances 2025 – Revente & reversement de l’avantage fiscal');
+
+            addKeyValueRow(t.resalePeriodLabel, resalePeriodLabel);
+            addKeyValueRow(t.resaleRefundAmount, formatCurrency(resaleInfo.refund));
+            if (resaleInfo.keep > 0) {
+              addKeyValueRow(t.resaleSavedLabel, formatCurrency(resaleInfo.keep));
+            }
+
+            doc.setFontSize(10.5);
+            doc.setTextColor(180, 40, 40);
+            ensureSpace(16);
+            doc.text(`⚠ ${t.resaleRiskTitle}`, marginX, y);
+            y += 5.5;
+            addParagraph(resaleRiskText, [160, 40, 40]);
+
+            doc.setFontSize(9.5);
+            doc.setTextColor(80);
+            ensureSpace(28);
+            doc.text(t.resaleTimelineTitle, marginX, y);
+            y += 5.5;
+            [
+              t.resaleTimeline0_12,
+              t.resaleTimeline12_24,
+              t.resaleTimeline24_36,
+              t.resaleTimelineAfter36,
+            ].forEach(line => {
+              doc.text(`• ${line}`, marginX, y);
+              y += 4.4;
+            });
+            y += 5;
+            doc.setTextColor(30);
+          }
+
+          // Legal refs footer
+          doc.setDrawColor(210);
+          doc.line(marginX, 280, pageWidth - marginX, 280);
+          doc.setFont('DejaVuSans', 'normal');
+          doc.setFontSize(8.5);
+          doc.setTextColor(110);
+          doc.text(`${t.legalRef}: ${t.decree}; ${t.article}`, marginX, 285);
+          doc.text('https://www.douane.gov.dz', pageWidth - marginX, 285, { align: 'right' });
+
+          doc.save('Dzair_Sourcing_Cars_Report.pdf');
+        };
+
+        // Charger le logo puis générer
+        const img = new Image();
+        img.src = './icon-512.png';
+        const safeGenerate = async (img) => {
+          try {
+            await generate(img);
+          } catch (error) {
+            console.error('PDF export failed', error);
+            alert('Impossible de générer le PDF, veuillez réessayer.');
+          }
+        };
+
+        img.onload = () => safeGenerate(img);
+        img.onerror = () => safeGenerate(null);
+      }, [results, t, vehicleAge, resaleInfo, resaleRiskText, currency, engineType, engineButtons, resalePeriod, resalePeriodLabel, lang]);
+
+      return (
+        <div className={`min-h-screen pb-10 ${containerClass}`}>
+          {/* Header */}
+          <header className="bg-dzGreen-700 text-white py-4 px-4 shadow-sm">
+            <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                  <img
+                    src="./icon-512.png"
+                    alt="Dzair Sourcing Cars"
+                    className="w-8 h-8 rounded-md object-contain"
+                  />
+                </div>
+                <div>
+                  <h1 className="text-xl md:text-2xl font-semibold">{t.title}</h1>
+                  <p className="text-xs md:text-sm text-gray-100 opacity-90">{t.subtitle}</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {[
+                  { code: 'ar', label: 'العربية' },
+                  { code: 'tz', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ' },
+                  { code: 'fr', label: 'Français' }
+                ].map(({ code, label }) => (
+                  <button
+                    key={code}
+                    onClick={() => setLang(code)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium border ${
+                      lang === code
+                        ? 'bg-white text-dzGreen-700 border-white'
+                        : 'bg-dzGreen-600 text-white border-dzGreen-500'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </header>
+
+          {/* Savings banner for new vs used */}
+          {vehicleAge === 'new' && carPrice && potentialUsedSavings > 0 && (
+            <div className="max-w-6xl mx-auto px-4 mt-4">
+              <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg flex items-start gap-3">
+                <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700">
+                  <IconLightbulb className="w-4 h-4" />
+                </div>
+                <div className="text-sm">
+                  <div className="font-semibold text-emerald-700">
+                    {t.savingsBannerPrefix} {formatCurrency(potentialUsedSavings)} {t.savingsBannerSuffix}
+                  </div>
+                  <div className="text-emerald-700 mt-1 text-xs md:text-sm">
+                    {t.savingsBannerInfo}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Two-rate explanation */}
+          <div className="max-w-6xl mx-auto px-4 mt-4">
+            <div className="card">
+              <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <IconInfo className="w-4 h-4" />
+                {t.twoRateExplain}
+              </h3>
+              <div className="grid md:grid-cols-2 gap-3 text-xs md:text-sm">
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-500 mt-1" />
+                  <div>
+                    <div className="font-semibold text-amber-800 flex items-center gap-2">
+                      {t.blackMarketRate}
+                      <span className="tag-yellow">{t.blackMarketRate}</span>
+                    </div>
+                    <p className="text-amber-800 mt-1">
+                      {t.blackMarketInfo}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 mt-1" />
+                  <div>
+                    <div className="font-semibold text-blue-800 flex items-center gap-2">
+                      {t.officialRate}
+                      <span className="tag-blue">{t.officialRate}</span>
+                    </div>
+                    <p className="text-blue-800 mt-1">
+                      {t.officialInfo}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-3 text-xs md:text-sm mt-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 mt-1" />
+                    <div>
+                      <div className="font-semibold text-amber-800">{t.blackMarketRate}</div>
+                      <p className="text-[11px] text-amber-800">{t.manualRateEntry}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[11px] text-amber-800 mb-1">USD/DZD</label>
+                      <input
+                        type="number"
+                        value={blackUSD}
+                        min="0"
+                        onChange={(e) => setBlackUSD(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-amber-800 mb-1">EUR/DZD</label>
+                      <input
+                        type="number"
+                        value={blackEUR}
+                        min="0"
+                        onChange={(e) => setBlackEUR(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-amber-300 bg-white text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-500 mt-1" />
+                    <div>
+                      <div className="font-semibold text-blue-800">{t.officialRate}</div>
+                      <p className="text-[11px] text-blue-800">{t.manualRateEntry}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[11px] text-blue-800 mb-1">USD/DZD</label>
+                      <input
+                        type="number"
+                        value={officialUSD}
+                        min="0"
+                        onChange={(e) => setOfficialUSD(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-blue-800 mb-1">EUR/DZD</label>
+                      <input
+                        type="number"
+                        value={officialEUR}
+                        min="0"
+                        onChange={(e) => setOfficialEUR(parseFloat(e.target.value) || 0)}
+                        className="w-full py-1.5 px-2 rounded border border-blue-300 bg-white text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main content */}
+          <div className="max-w-6xl mx-auto px-4 mt-4">
+            <div className="grid lg:grid-cols-2 gap-5 items-start">
+              {/* Left: Inputs */}
+              <div className="space-y-4">
+                {/* Vehicle info */}
+                <div className="card">
+                  <h2 className="text-base md:text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-dzGreen-50 text-dzGreen-600 border border-dzGreen-100">
+                      <IconCar className="w-4 h-4" />
+                    </span>
+                    {t.vehicleInfo}
+                  </h2>
+
+                  {/* Currency */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      {t.currency}
+                    </label>
+                    <div className="flex gap-2">
+                      {['USD', 'EUR'].map((curr) => (
+                        <button
+                          key={curr}
+                          onClick={() => setCurrency(curr)}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-md border ${
+                            currency === curr
+                              ? 'bg-dzGreen-600 text-white border-dzGreen-600'
+                              : 'bg-gray-50 text-gray-700 border-gray-300'
+                          }`}
+                        >
+                          {curr === 'USD' ? '$ USD' : '€ EUR'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Car price */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      {t.carPrice}
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-semibold">
+                        {currency === 'USD' ? '$' : '€'}
+                      </span>
+                      <input
+                        type="number"
+                        value={carPrice}
+                        onChange={(e) => setCarPrice(e.target.value)}
+                        placeholder="12300"
+                        className="input-field pl-8"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Vehicle age */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      {t.vehicleAge}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { value: 'new', label: t.brandNew },
+                        { value: 'used', label: t.usedUnder3 }
+                      ].map(({ value, label }) => (
+                        <button
+                          key={value}
+                          onClick={() => setVehicleAge(value)}
+                          className={`py-2 px-3 rounded-md text-xs font-medium flex items-center justify-center gap-2 border ${
+                            vehicleAge === value
+                              ? 'bg-dzGreen-600 text-white border-dzGreen-600'
+                              : 'bg-gray-50 text-gray-700 border-gray-300'
+                          }`}
+                        >
+                          <span className="text-[11px] md:text-xs">{label}</span>
+                          {value === 'used' && (
+                            <span className="badge-best">Best Value</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Engine type */}
+                  <div className="mb-1">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      {t.engineType}
+                    </label>
+                    <div className="space-y-1">
+                      {engineButtons.map(({ value, label, rateUsed }) => (
+                        <button
+                          key={value}
+                          onClick={() => setEngineType(value)}
+                          className={`w-full py-2 px-3 rounded-md text-xs flex items-center justify-between border ${
+                            engineType === value
+                              ? 'bg-dzGreen-600 text-white border-dzGreen-600'
+                              : 'bg-gray-50 text-gray-700 border-gray-300'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <IconCar className="w-4 h-4" />
+                            <span className="text-[11px] md:text-xs">{label}</span>
+                          </span>
+                          <span
+                            className={`text-[10px] px-2 py-0.5 rounded-full ${
+                              engineType === value ? 'bg-white/20' : 'bg-gray-200'
+                            }`}
+                          >
+                            {vehicleAge === 'used'
+                              ? rateUsed
+                              : `DD ${newCarDdRates[value]}%`}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Foreign costs */}
+                <div className="card">
+                  <h2 className="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
+                      <IconShip className="w-4 h-4" />
+                    </span>
+                    {t.foreignCosts}
+                    <span className="tag-yellow ml-2">{t.blackMarketRate}</span>
+                  </h2>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      {t.freightInsurance}
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-semibold">
+                        {currency === 'USD' ? '$' : '€'}
+                      </span>
+                      <input
+                        type="number"
+                        value={freightInsurance}
+                        onChange={(e) => setFreightInsurance(e.target.value)}
+                        placeholder="1500"
+                        className="input-field pl-8"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Local costs */}
+                <div className="card">
+                  <h2 className="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                      <IconClipboard className="w-4 h-4" />
+                    </span>
+                    {t.localCosts}
+                    <span className="tag-green ml-2">DZD</span>
+                  </h2>
+                  <div className="space-y-3">
+                    {[
+                      { key: 'inspection', value: inspection, setter: setInspection, placeholder: '15000' },
+                      { key: 'documentation', value: documentation, setter: setDocumentation, placeholder: '10000' },
+                      { key: 'portBroker', value: portBroker, setter: setPortBroker, placeholder: '150000' }
+                    ].map(({ key, value, setter, placeholder }) => (
+                      <div key={key}>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                          {t[key]}
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={value}
+                            onChange={(e) => setter(e.target.value)}
+                            placeholder={placeholder}
+                            className="input-field pr-10"
+                            min="0"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                            DZD
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Terminology */}
+                <div className="card">
+                  <h2 className="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
+                      <IconInfo className="w-4 h-4" />
+                    </span>
+                    {t.terminologyTitle}
+                  </h2>
+                  <div className="space-y-2 text-xs md:text-sm">
+                    {[
+                      { label: t.termCIF, desc: t.termCIFDesc, color: 'text-blue-700 bg-blue-50 border-blue-100' },
+                      { label: t.termFOB, desc: t.termFOBDesc, color: 'text-amber-700 bg-amber-50 border-amber-100' },
+                      { label: t.termDD, desc: t.termDDDesc, color: 'text-green-700 bg-green-50 border-green-100' },
+                      { label: t.termTCS, desc: t.termTCSDesc, color: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
+                      { label: t.termTVA, desc: t.termTVADesc, color: 'text-purple-700 bg-purple-50 border-purple-100' }
+                    ].map(({ label, desc, color }) => (
+                      <div key={label} className={`border rounded-md p-2 ${color}`}>
+                        <div className="font-semibold">{label}</div>
+                        <div className="text-[11px] md:text-xs mt-1 leading-snug">{desc}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Results */}
+              <div className="lg:sticky lg:top-4 h-fit">
+                {showResults && results ? (
+                  <div className="card animate-fade-in">
+                    <h2 className="text-base md:text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                        <IconChart className="w-4 h-4" />
+                      </span>
+                      {t.results}
+                    </h2>
+
+                    <div className="space-y-3 text-xs md:text-sm">
+                      {/* FOB */}
+                      <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="font-semibold text-amber-800">
+                              {t.fobPrice}
+                            </span>
+                            <p className="text-[11px] text-amber-700 mt-1">
+                              @ {t.atBlackRate}: {formatNumber(results.blackRate)} DZD/{currency}
+                            </p>
+                          </div>
+                          <span className="font-semibold text-amber-900">
+                            {formatCurrency(results.fobDZD)}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-amber-600 mt-1">
+                          {formatCurrency(results.price, currency)} × {formatNumber(results.blackRate)}
+                        </p>
+                      </div>
+
+                      {/* Freight */}
+                      <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="font-semibold text-amber-800">
+                              {t.freightCost}
+                            </span>
+                            <p className="text-[11px] text-amber-700 mt-1">
+                              @ {t.atBlackRate}: {formatNumber(results.blackRate)} DZD/{currency}
+                            </p>
+                          </div>
+                          <span className="font-semibold text-amber-900">
+                            {formatCurrency(results.freightDZD)}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-amber-600 mt-1">
+                          {formatCurrency(results.freight, currency)} × {formatNumber(results.blackRate)}
+                        </p>
+                      </div>
+
+                      {/* Local expenses */}
+                      <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <span className="font-semibold text-green-800">
+                            {t.otherFees}
+                          </span>
+                          <span className="font-semibold text-green-900">
+                            {formatCurrency(results.localExpenses)}
+                          </span>
+                        </div>
+                        <div className="space-y-1 text-[11px] text-green-800">
+                          <div className="flex justify-between">
+                            <span>• {t.inspection}</span>
+                            <span>{formatCurrency(results.inspectionFee)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>• {t.documentation}</span>
+                            <span>{formatCurrency(results.docFee)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>• {t.portBroker}</span>
+                            <span>{formatCurrency(results.portFee)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* CIF */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="font-semibold text-blue-800">
+                              {t.customsCIF}
+                            </span>
+                            <p className="text-[11px] text-blue-700 mt-1">
+                              @ {t.atOfficialRate}: {formatNumber(results.officialRate)} DZD/{currency}
+                            </p>
+                          </div>
+                          <span className="font-semibold text-blue-900">
+                            {formatCurrency(results.cifCustoms)}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-blue-700 mt-1">
+                          ({formatCurrency(results.price, currency)} + {formatCurrency(results.freight, currency)}) × {formatNumber(results.officialRate)}
+                        </p>
+                        <p className="text-[11px] text-blue-500 italic mt-1">
+                          {t.forTaxCalc}
+                        </p>
+                      </div>
+
+                      {/* Customs taxes */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2">
+                            <IconTax className="w-4 h-4 text-blue-700" />
+                            <div>
+                              <span className="font-semibold text-blue-800">
+                                {t.customsRights}
+                              </span>
+                              <p className="text-[11px] text-blue-700 mt-1">
+                                {t.onCIF}: {formatCurrency(results.cifCustoms)}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="font-semibold text-blue-900">
+                            {formatCurrency(results.totalTax)}
+                          </span>
+                        </div>
+                        {results.taxes.breakdown ? (
+                          <div className="space-y-1 text-[11px] md:text-xs">
+                            <div className="flex justify-between bg-white rounded px-2 py-1">
+                              <span>{t.dd} ({results.taxes.ddRate}%)</span>
+                              <span>{formatCurrency(results.taxes.dd)}</span>
+                            </div>
+                            <div className="flex justify-between bg-white rounded px-2 py-1">
+                              <span>{t.tcs} ({results.taxes.tcsRate}%)</span>
+                              <span>{formatCurrency(results.taxes.tcs)}</span>
+                            </div>
+                            <div className="flex justify-between bg-white rounded px-2 py-1">
+                              <span>{t.tva} ({results.taxes.tvaRate}%)</span>
+                              <span>{formatCurrency(results.taxes.tva)}</span>
+                            </div>
+                            <p className="text-[11px] text-blue-500 mt-1">
+                              TVA = (CIF + DD + TCS) × 19%
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-1 text-[11px] md:text-xs">
+                            <div className="flex justify-between bg-white rounded px-2 py-1">
+                              <span>{t.baseRate}</span>
+                              <span>{results.taxes.baseRate}%</span>
+                            </div>
+                            <div className="flex justify-between bg-white rounded px-2 py-1">
+                              <span>{t.discount}</span>
+                              <span>-{results.taxes.discount}%</span>
+                            </div>
+                            <div className="flex justify-between bg-green-50 border border-green-200 rounded px-2 py-1">
+                              <span className="text-dzGreen-700 font-medium">{t.finalRate}</span>
+                              <span className="text-dzGreen-700 font-semibold">{results.taxes.finalRate}%</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Loi de Finances 2025: Avantage fiscal & revente – visible pour used cars */}
+                      {vehicleAge === 'used' && resaleInfo && (
+                        <div className="bg-violet-50 border border-violet-200 rounded-md p-3">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div className="flex items-center gap-2">
+                              <IconShieldCheck className="w-4 h-4 text-violet-700" />
+                              <span className="font-semibold text-violet-800 text-sm">
+                                {t.resaleTitle}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Risk banner */}
+                          <div className="mb-2 bg-violet-100 border border-violet-200 rounded px-2 py-1.5 text-[11px] text-violet-800">
+                            <span className="font-semibold mr-1">⚠ {t.resaleRiskTitle}:</span>
+                            <span>{resaleRiskText}</span>
+                          </div>
+
+                          <div className="space-y-1 text-[11px] md:text-xs mb-2">
+                            <div className="flex justify-between bg-white rounded px-2 py-1">
+                              <span>
+                                {t.resaleAdvantageAmount}
+                                {results.taxAdvantageRate > 0 ? ` (${formatNumber(results.taxAdvantageRate)}%)` : ''}
+                              </span>
+                              <span>{formatCurrency(resaleInfo.advantage)}</span>
+                            </div>
+                          </div>
+
+                          {/* Choix période au lieu d'un nombre de mois */}
+                          <div className="mb-2">
+                            <label className="block text-[11px] font-medium text-violet-800 mb-1">
+                              {t.resalePeriodLabel}
+                            </label>
+                            <div className="space-y-1">
+                              <label className="flex items-center gap-2 text-[11px]">
+                                <input
+                                  type="radio"
+                                  name="resalePeriod"
+                                  value="0_12"
+                                  checked={resalePeriod === '0_12'}
+                                  onChange={(e) => setResalePeriod(e.target.value)}
+                                />
+                                <span>{t.resaleTimeline0_12}</span>
+                              </label>
+                              <label className="flex items-center gap-2 text-[11px]">
+                                <input
+                                  type="radio"
+                                  name="resalePeriod"
+                                  value="12_24"
+                                  checked={resalePeriod === '12_24'}
+                                  onChange={(e) => setResalePeriod(e.target.value)}
+                                />
+                                <span>{t.resaleTimeline12_24}</span>
+                              </label>
+                              <label className="flex items-center gap-2 text-[11px]">
+                                <input
+                                  type="radio"
+                                  name="resalePeriod"
+                                  value="24_36"
+                                  checked={resalePeriod === '24_36'}
+                                  onChange={(e) => setResalePeriod(e.target.value)}
+                                />
+                                <span>{t.resaleTimeline24_36}</span>
+                              </label>
+                              <label className="flex items-center gap-2 text-[11px]">
+                                <input
+                                  type="radio"
+                                  name="resalePeriod"
+                                  value="after_36"
+                                  checked={resalePeriod === 'after_36'}
+                                  onChange={(e) => setResalePeriod(e.target.value)}
+                                />
+                                <span>{t.resaleTimelineAfter36}</span>
+                              </label>
+                            </div>
+                            <p className="mt-1 text-[11px] text-violet-700">
+                              {t[resaleInfo.labelKey]}
+                            </p>
+                          </div>
+
+                          <div className="space-y-1 text-[11px] md:text-xs mb-2">
+                            <div className="flex justify-between bg-violet-100 rounded px-2 py-1">
+                              <span>{t.resaleRefundAmount}</span>
+                              <span>{formatCurrency(resaleInfo.refund)}</span>
+                            </div>
+                            {resaleInfo.keep > 0 && (
+                              <div className="flex justify-between bg-emerald-50 rounded px-2 py-1">
+                                <span>{t.resaleSavedLabel}</span>
+                                <span>{formatCurrency(resaleInfo.keep)}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Timeline text */}
+                          <div className="mt-1 text-[11px] text-violet-800">
+                            <div className="font-semibold mb-1">{t.resaleTimelineTitle}</div>
+                            <ul className="space-y-0.5">
+                              <li>• {t.resaleTimeline0_12}</li>
+                              <li>• {t.resaleTimeline12_24}</li>
+                              <li>• {t.resaleTimeline24_36}</li>
+                              <li>• {t.resaleTimelineAfter36}</li>
+                            </ul>
+                          </div>
+
+                          <p className="text-[11px] text-violet-700 mt-2">
+                            {t.resaleLawNote}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* New car tax */}
+                      <div className={`rounded-md p-3 border ${
+                        vehicleAge === 'new'
+                          ? 'bg-red-50 border-red-200'
+                          : 'bg-green-50 border-green-200'
+                      }`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <IconShieldCheck
+                              className={`w-4 h-4 ${
+                                vehicleAge === 'new' ? 'text-red-600' : 'text-green-600'
+                              }`}
+                            />
+                            <span className={`font-semibold text-sm ${
+                              vehicleAge === 'new' ? 'text-red-800' : 'text-green-800'
+                            }`}>
+                              {t.newCarTax}
+                            </span>
+                          </div>
+                          {vehicleAge === 'new' ? (
+                            <span className="font-semibold text-red-900">
+                              {formatCurrency(NEW_CAR_VIGNETTE)}
+                            </span>
+                          ) : (
+                            <span className="font-semibold text-green-700 text-xs">
+                              {t.notApplicable}
+                            </span>
+                          )}
+                        </div>
+
+                        {vehicleAge === 'used' && (
+                          <p className="text-[11px] text-green-700 mt-1">
+                            {t.saved}: {formatCurrency(NEW_CAR_VIGNETTE)}
+                          </p>
+                        )}
+
+                        {vehicleAge === 'new' && potentialUsedSavings > 0 && (
+                          <p className="text-[11px] text-green-800 mt-2 font-medium">
+                            {t.newCarPromoPrefix} {formatCurrency(potentialUsedSavings)} {t.newCarPromoSuffix}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Total */}
+                      <div className="result-card">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-semibold text-sm md:text-base flex items-center gap-2">
+                            <IconChart className="w-5 h-5" />
+                            {t.totalCost}
+                          </span>
+                          <span className="font-bold text-xl md:text-2xl">
+                            {formatCurrency(results.total)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* PDF button */}
+                      <div className="mt-2">
+                        <button
+                          onClick={exportPDF}
+                          className="w-full mt-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs md:text-sm font-semibold border border-gray-300 bg-white hover:bg-gray-50 text-gray-800"
+                        >
+                          <span>📄</span>
+                          <span>{t.pdfDownload}</span>
+                        </button>
+                        <p className="mt-1 text-[11px] text-gray-500 text-center">
+                          {t.pdfSubtitle}
+                        </p>
+                      </div>
+
+                      {/* Legal refs */}
+                      <div className="mt-2 bg-gray-50 border border-gray-200 rounded-md p-3 text-[11px] text-gray-700">
+                        <div className="font-semibold mb-1">{t.legalRef}</div>
+                        <ul className="space-y-1">
+                          <li>• {t.decree}</li>
+                          <li>• {t.article}</li>
+                          <li>
+                            • <a
+                              href="https://www.douane.gov.dz"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-dzGreen-700 underline"
+                            >
+                              https://www.douane.gov.dz
+                            </a> – {t.douaneSite}
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="card text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                      <IconCar className="w-8 h-8 text-dzGreen-700" />
+                    </div>
+                    <p className="text-gray-600 text-sm md:text-base">
+                      {t.enterPrice}
+                    </p>
+                    <p className="text-gray-400 text-xs mt-1">
+                      {t.cifFormula}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <footer className="mt-8 border-t border-gray-200 py-4 bg-white/80">
+            <div className="max-w-6xl mx-auto px-4 text-center text-xs text-gray-500">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <span className="text-xl">🇩🇿</span>
+                <span className="font-semibold text-dzGreen-700">Dzair Sourcing Cars</span>
+              </div>
+              <p>© 2025 - {t.footerRights}</p>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('app'));
+    root.render(<DzairCalculator />);
