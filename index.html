@@ -335,7 +335,11 @@
         termTCS: 'TCS',
         termTCSDesc: 'رسم التضامن (3٪ من قيمة CIF)',
         termTVA: 'TVA',
-        termTVADesc: 'الضريبة على القيمة المضافة بعد DD وTCS'
+        termTVADesc: 'الضريبة على القيمة المضافة بعد DD وTCS',
+        termDZDDesc: 'الدينار الجزائري (العملة المحلية)',
+        termUSDDesc: 'الدولار الأمريكي',
+        termEURDesc: 'اليورو',
+        termPDFDesc: 'ملف PDF قابل للتنزيل مع النتائج'
       },
       fr: {
         title: 'Dzair Sourcing Cars',
@@ -435,7 +439,11 @@
         termTCS: 'TCS',
         termTCSDesc: 'Taxe de solidarité (3 % du CIF)',
         termTVA: 'TVA',
-        termTVADesc: 'Taxe sur la valeur ajoutée calculée après DD et TCS'
+        termTVADesc: 'Taxe sur la valeur ajoutée calculée après DD et TCS',
+        termDZDDesc: 'Dinar algérien (monnaie locale)',
+        termUSDDesc: 'Dollar des États-Unis',
+        termEURDesc: 'Euro',
+        termPDFDesc: 'Document PDF exportable avec vos calculs'
       },
       tz: {
         title: 'Dzair Sourcing Cars',
@@ -535,7 +543,11 @@
         termTCS: 'TCS',
         termTCSDesc: 'Tawsit n tiddukla (3% n CIF)',
         termTVA: 'TVA',
-        termTVADesc: 'TVA tettwasḥebbes seld DD d TCS'
+        termTVADesc: 'TVA tettwasḥebbes seld DD d TCS',
+        termDZDDesc: 'Dinar Lezzayer (tedrimt tagarraṭ)',
+        termUSDDesc: 'Adular n Marikan',
+        termEURDesc: 'Uru (tedrimt n Turuft)',
+        termPDFDesc: 'Afaylu PDF i yettwasideren d yisumar'
       }
     };
 
@@ -581,6 +593,46 @@
       return `${symbol}${formatNumber(num)}`;
     };
 
+    const buildAcronymDefinitions = (t) =>
+      Object.entries({
+        CIF: t.termCIFDesc,
+        FOB: t.termFOBDesc,
+        DD: t.termDDDesc,
+        TCS: t.termTCSDesc,
+        TVA: t.termTVADesc,
+        DZD: t.termDZDDesc,
+        USD: t.termUSDDesc,
+        EUR: t.termEURDesc,
+        PDF: t.termPDFDesc
+      }).reduce((acc, [key, value]) => {
+        if (typeof value === 'string' && value.trim()) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+
+    const renderWithAcronyms = (text, t) => {
+      if (typeof text !== 'string') return text;
+      const definitions = buildAcronymDefinitions(t);
+      const keys = Object.keys(definitions);
+      if (!keys.length) return text;
+      const regex = new RegExp(`\\b(${keys.join('|')})\\b`, 'g');
+      return text.split(regex).map((part, index) =>
+        definitions[part] ? (
+          <abbr
+            key={`${part}-${index}`}
+            title={definitions[part]}
+            className="border-b border-dashed border-gray-300 cursor-help"
+            aria-label={definitions[part]}
+          >
+            {part}
+          </abbr>
+        ) : (
+          part
+        )
+      );
+    };
+
     /* ------------ Main component ------------ */
 
     function DzairCalculator() {
@@ -607,6 +659,8 @@
 
       const t = translations[lang];
       const isRTL = lang === 'ar';
+      const renderText = useCallback((value) => renderWithAcronyms(value, t), [t]);
+      const renderCurrency = useCallback((value, curr) => renderWithAcronyms(formatCurrency(value, curr), t), [t]);
 
       const engineButtons = [
         { value: 'electric', label: translations[lang].electric, rateUsed: '11.42%' },
@@ -984,8 +1038,8 @@
                   />
                 </div>
                 <div>
-                  <h1 className="text-xl md:text-2xl font-semibold">{t.title}</h1>
-                  <p className="text-xs md:text-sm text-gray-100 opacity-90">{t.subtitle}</p>
+                  <h1 className="text-xl md:text-2xl font-semibold">{renderText(t.title)}</h1>
+                  <p className="text-xs md:text-sm text-gray-100 opacity-90">{renderText(t.subtitle)}</p>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -1019,10 +1073,10 @@
                 </div>
                 <div className="text-sm">
                   <div className="font-semibold text-emerald-700">
-                    {t.savingsBannerPrefix} {formatCurrency(potentialUsedSavings)} {t.savingsBannerSuffix}
+                    {renderText(t.savingsBannerPrefix)} {renderCurrency(potentialUsedSavings)} {renderText(t.savingsBannerSuffix)}
                   </div>
                   <div className="text-emerald-700 mt-1 text-xs md:text-sm">
-                    {t.savingsBannerInfo}
+                    {renderText(t.savingsBannerInfo)}
                   </div>
                 </div>
               </div>
@@ -1034,18 +1088,18 @@
             <div className="card">
               <h3 className="text-sm md:text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
                 <IconInfo className="w-4 h-4" />
-                {t.twoRateExplain}
+                {renderText(t.twoRateExplain)}
               </h3>
               <div className="grid md:grid-cols-2 gap-3 text-xs md:text-sm">
                 <div className="flex items-start gap-2">
                   <div className="w-2 h-2 rounded-full bg-amber-500 mt-1" />
                   <div>
                     <div className="font-semibold text-amber-800 flex items-center gap-2">
-                      {t.blackMarketRate}
-                      <span className="tag-yellow">{t.blackMarketRate}</span>
+                      {renderText(t.blackMarketRate)}
+                      <span className="tag-yellow">{renderText(t.blackMarketRate)}</span>
                     </div>
                     <p className="text-amber-800 mt-1">
-                      {t.blackMarketInfo}
+                      {renderText(t.blackMarketInfo)}
                     </p>
                   </div>
                 </div>
@@ -1053,11 +1107,11 @@
                   <div className="w-2 h-2 rounded-full bg-blue-500 mt-1" />
                   <div>
                     <div className="font-semibold text-blue-800 flex items-center gap-2">
-                      {t.officialRate}
-                      <span className="tag-blue">{t.officialRate}</span>
+                      {renderText(t.officialRate)}
+                      <span className="tag-blue">{renderText(t.officialRate)}</span>
                     </div>
                     <p className="text-blue-800 mt-1">
-                      {t.officialInfo}
+                      {renderText(t.officialInfo)}
                     </p>
                   </div>
                 </div>
@@ -1068,13 +1122,13 @@
                   <div className="flex items-start gap-2 mb-2">
                     <span className="w-2 h-2 rounded-full bg-amber-500 mt-1" />
                     <div>
-                      <div className="font-semibold text-amber-800">{t.blackMarketRate}</div>
-                      <p className="text-[11px] text-amber-800">{t.manualRateEntry}</p>
+                      <div className="font-semibold text-amber-800">{renderText(t.blackMarketRate)}</div>
+                      <p className="text-[11px] text-amber-800">{renderText(t.manualRateEntry)}</p>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <div>
-                      <label className="block text-[11px] text-amber-800 mb-1">USD/DZD</label>
+                      <label className="block text-[11px] text-amber-800 mb-1">{renderText('USD/DZD')}</label>
                       <input
                         type="number"
                         value={blackUSD}
@@ -1084,7 +1138,7 @@
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] text-amber-800 mb-1">EUR/DZD</label>
+                      <label className="block text-[11px] text-amber-800 mb-1">{renderText('EUR/DZD')}</label>
                       <input
                         type="number"
                         value={blackEUR}
@@ -1100,13 +1154,13 @@
                   <div className="flex items-start gap-2 mb-2">
                     <span className="w-2 h-2 rounded-full bg-blue-500 mt-1" />
                     <div>
-                      <div className="font-semibold text-blue-800">{t.officialRate}</div>
-                      <p className="text-[11px] text-blue-800">{t.manualRateEntry}</p>
+                      <div className="font-semibold text-blue-800">{renderText(t.officialRate)}</div>
+                      <p className="text-[11px] text-blue-800">{renderText(t.manualRateEntry)}</p>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <div>
-                      <label className="block text-[11px] text-blue-800 mb-1">USD/DZD</label>
+                      <label className="block text-[11px] text-blue-800 mb-1">{renderText('USD/DZD')}</label>
                       <input
                         type="number"
                         value={officialUSD}
@@ -1116,7 +1170,7 @@
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] text-blue-800 mb-1">EUR/DZD</label>
+                      <label className="block text-[11px] text-blue-800 mb-1">{renderText('EUR/DZD')}</label>
                       <input
                         type="number"
                         value={officialEUR}
@@ -1142,13 +1196,13 @@
                     <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-dzGreen-50 text-dzGreen-600 border border-dzGreen-100">
                       <IconCar className="w-4 h-4" />
                     </span>
-                    {t.vehicleInfo}
+                    {renderText(t.vehicleInfo)}
                   </h2>
 
                   {/* Currency */}
                   <div className="mb-4">
                     <label className="block text-xs font-medium text-gray-600 mb-1">
-                      {t.currency}
+                      {renderText(t.currency)}
                     </label>
                     <div className="flex gap-2">
                       {['USD', 'EUR'].map((curr) => (
@@ -1161,7 +1215,7 @@
                               : 'bg-gray-50 text-gray-700 border-gray-300'
                           }`}
                         >
-                          {curr === 'USD' ? '$ USD' : '€ EUR'}
+                          {renderText(curr === 'USD' ? '$ USD' : '€ EUR')}
                         </button>
                       ))}
                     </div>
@@ -1170,7 +1224,7 @@
                   {/* Car price */}
                   <div className="mb-4">
                     <label className="block text-xs font-medium text-gray-600 mb-1">
-                      {t.carPrice}
+                      {renderText(t.carPrice)}
                     </label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-semibold">
@@ -1190,7 +1244,7 @@
                   {/* Vehicle age */}
                   <div className="mb-4">
                     <label className="block text-xs font-medium text-gray-600 mb-1">
-                      {t.vehicleAge}
+                      {renderText(t.vehicleAge)}
                     </label>
                     <div className="grid grid-cols-2 gap-2">
                       {[
@@ -1206,7 +1260,7 @@
                               : 'bg-gray-50 text-gray-700 border-gray-300'
                           }`}
                         >
-                          <span className="text-[11px] md:text-xs">{label}</span>
+                          <span className="text-[11px] md:text-xs">{renderText(label)}</span>
                           {value === 'used' && (
                             <span className="badge-best">Best Value</span>
                           )}
@@ -1218,7 +1272,7 @@
                   {/* Engine type */}
                   <div className="mb-1">
                     <label className="block text-xs font-medium text-gray-600 mb-1">
-                      {t.engineType}
+                      {renderText(t.engineType)}
                     </label>
                     <div className="space-y-1">
                       {engineButtons.map(({ value, label, rateUsed }) => (
@@ -1233,7 +1287,7 @@
                         >
                           <span className="flex items-center gap-2">
                             <IconCar className="w-4 h-4" />
-                            <span className="text-[11px] md:text-xs">{label}</span>
+                            <span className="text-[11px] md:text-xs">{renderText(label)}</span>
                           </span>
                           <span
                             className={`text-[10px] px-2 py-0.5 rounded-full ${
@@ -1256,12 +1310,12 @@
                     <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
                       <IconShip className="w-4 h-4" />
                     </span>
-                    {t.foreignCosts}
-                    <span className="tag-yellow ml-2">{t.blackMarketRate}</span>
+                    {renderText(t.foreignCosts)}
+                    <span className="tag-yellow ml-2">{renderText(t.blackMarketRate)}</span>
                   </h2>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">
-                      {t.freightInsurance}
+                      {renderText(t.freightInsurance)}
                     </label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-semibold">
@@ -1285,8 +1339,8 @@
                     <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
                       <IconClipboard className="w-4 h-4" />
                     </span>
-                    {t.localCosts}
-                    <span className="tag-green ml-2">DZD</span>
+                    {renderText(t.localCosts)}
+                    <span className="tag-green ml-2">{renderText('DZD')}</span>
                   </h2>
                   <div className="space-y-3">
                     {[
@@ -1296,7 +1350,7 @@
                     ].map(({ key, value, setter, placeholder }) => (
                       <div key={key}>
                         <label className="block text-xs font-medium text-gray-600 mb-1">
-                          {t[key]}
+                          {renderText(t[key])}
                         </label>
                         <div className="relative">
                           <input
@@ -1308,7 +1362,7 @@
                             min="0"
                           />
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                            DZD
+                            {renderText('DZD')}
                           </span>
                         </div>
                       </div>
@@ -1322,7 +1376,7 @@
                     <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
                       <IconInfo className="w-4 h-4" />
                     </span>
-                    {t.terminologyTitle}
+                    {renderText(t.terminologyTitle)}
                   </h2>
                   <div className="space-y-2 text-xs md:text-sm">
                     {[
@@ -1333,8 +1387,8 @@
                       { label: t.termTVA, desc: t.termTVADesc, color: 'text-purple-700 bg-purple-50 border-purple-100' }
                     ].map(({ label, desc, color }) => (
                       <div key={label} className={`border rounded-md p-2 ${color}`}>
-                        <div className="font-semibold">{label}</div>
-                        <div className="text-[11px] md:text-xs mt-1 leading-snug">{desc}</div>
+                        <div className="font-semibold">{renderText(label)}</div>
+                        <div className="text-[11px] md:text-xs mt-1 leading-snug">{renderText(desc)}</div>
                       </div>
                     ))}
                   </div>
@@ -1349,7 +1403,7 @@
                       <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
                         <IconChart className="w-4 h-4" />
                       </span>
-                      {t.results}
+                      {renderText(t.results)}
                     </h2>
 
                     <div className="space-y-3 text-xs md:text-sm">
@@ -1358,18 +1412,18 @@
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <span className="font-semibold text-amber-800">
-                              {t.fobPrice}
+                              {renderText(t.fobPrice)}
                             </span>
                             <p className="text-[11px] text-amber-700 mt-1">
-                              @ {t.atBlackRate}: {formatNumber(results.blackRate)} DZD/{currency}
+                              @ {renderText(t.atBlackRate)}: {formatNumber(results.blackRate)} {renderText('DZD')}/{renderText(currency)}
                             </p>
                           </div>
                           <span className="font-semibold text-amber-900">
-                            {formatCurrency(results.fobDZD)}
+                            {renderCurrency(results.fobDZD)}
                           </span>
                         </div>
                         <p className="text-[11px] text-amber-600 mt-1">
-                          {formatCurrency(results.price, currency)} × {formatNumber(results.blackRate)}
+                          {renderCurrency(results.price, currency)} × {formatNumber(results.blackRate)}
                         </p>
                       </div>
 
@@ -1378,18 +1432,18 @@
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <span className="font-semibold text-amber-800">
-                              {t.freightCost}
+                              {renderText(t.freightCost)}
                             </span>
                             <p className="text-[11px] text-amber-700 mt-1">
-                              @ {t.atBlackRate}: {formatNumber(results.blackRate)} DZD/{currency}
+                              @ {renderText(t.atBlackRate)}: {formatNumber(results.blackRate)} {renderText('DZD')}/{renderText(currency)}
                             </p>
                           </div>
                           <span className="font-semibold text-amber-900">
-                            {formatCurrency(results.freightDZD)}
+                            {renderCurrency(results.freightDZD)}
                           </span>
                         </div>
                         <p className="text-[11px] text-amber-600 mt-1">
-                          {formatCurrency(results.freight, currency)} × {formatNumber(results.blackRate)}
+                          {renderCurrency(results.freight, currency)} × {formatNumber(results.blackRate)}
                         </p>
                       </div>
 
@@ -1397,24 +1451,24 @@
                       <div className="bg-green-50 border border-green-200 rounded-md p-3">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <span className="font-semibold text-green-800">
-                            {t.otherFees}
+                            {renderText(t.otherFees)}
                           </span>
                           <span className="font-semibold text-green-900">
-                            {formatCurrency(results.localExpenses)}
+                            {renderCurrency(results.localExpenses)}
                           </span>
                         </div>
                         <div className="space-y-1 text-[11px] text-green-800">
                           <div className="flex justify-between">
-                            <span>• {t.inspection}</span>
-                            <span>{formatCurrency(results.inspectionFee)}</span>
+                            <span>• {renderText(t.inspection)}</span>
+                            <span>{renderCurrency(results.inspectionFee)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>• {t.documentation}</span>
-                            <span>{formatCurrency(results.docFee)}</span>
+                            <span>• {renderText(t.documentation)}</span>
+                            <span>{renderCurrency(results.docFee)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>• {t.portBroker}</span>
-                            <span>{formatCurrency(results.portFee)}</span>
+                            <span>• {renderText(t.portBroker)}</span>
+                            <span>{renderCurrency(results.portFee)}</span>
                           </div>
                         </div>
                       </div>
@@ -1424,21 +1478,21 @@
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <span className="font-semibold text-blue-800">
-                              {t.customsCIF}
+                              {renderText(t.customsCIF)}
                             </span>
                             <p className="text-[11px] text-blue-700 mt-1">
-                              @ {t.atOfficialRate}: {formatNumber(results.officialRate)} DZD/{currency}
+                              @ {renderText(t.atOfficialRate)}: {formatNumber(results.officialRate)} {renderText('DZD')}/{renderText(currency)}
                             </p>
                           </div>
                           <span className="font-semibold text-blue-900">
-                            {formatCurrency(results.cifCustoms)}
+                            {renderCurrency(results.cifCustoms)}
                           </span>
                         </div>
                         <p className="text-[11px] text-blue-700 mt-1">
-                          ({formatCurrency(results.price, currency)} + {formatCurrency(results.freight, currency)}) × {formatNumber(results.officialRate)}
+                          ({renderCurrency(results.price, currency)} + {renderCurrency(results.freight, currency)}) × {formatNumber(results.officialRate)}
                         </p>
                         <p className="text-[11px] text-blue-500 italic mt-1">
-                          {t.forTaxCalc}
+                          {renderText(t.forTaxCalc)}
                         </p>
                       </div>
 
@@ -1449,33 +1503,33 @@
                             <IconTax className="w-4 h-4 text-blue-700" />
                             <div>
                               <span className="font-semibold text-blue-800">
-                                {t.customsRights}
+                                {renderText(t.customsRights)}
                               </span>
                               <p className="text-[11px] text-blue-700 mt-1">
-                                {t.onCIF}: {formatCurrency(results.cifCustoms)}
+                                {renderText(t.onCIF)}: {renderCurrency(results.cifCustoms)}
                               </p>
                             </div>
                           </div>
                           <span className="font-semibold text-blue-900">
-                            {formatCurrency(results.totalTax)}
+                            {renderCurrency(results.totalTax)}
                           </span>
                         </div>
                         {results.taxes.breakdown ? (
-                          <div className="space-y-1 text-[11px] md:text-xs">
-                            <div className="flex justify-between bg-white rounded px-2 py-1">
-                              <span>{t.dd} ({results.taxes.ddRate}%)</span>
-                              <span>{formatCurrency(results.taxes.dd)}</span>
+                            <div className="space-y-1 text-[11px] md:text-xs">
+                              <div className="flex justify-between bg-white rounded px-2 py-1">
+                              <span>{renderText(t.dd)} ({results.taxes.ddRate}%)</span>
+                              <span>{renderCurrency(results.taxes.dd)}</span>
                             </div>
                             <div className="flex justify-between bg-white rounded px-2 py-1">
-                              <span>{t.tcs} ({results.taxes.tcsRate}%)</span>
-                              <span>{formatCurrency(results.taxes.tcs)}</span>
+                              <span>{renderText(t.tcs)} ({results.taxes.tcsRate}%)</span>
+                              <span>{renderCurrency(results.taxes.tcs)}</span>
                             </div>
                             <div className="flex justify-between bg-white rounded px-2 py-1">
-                              <span>{t.tva} ({results.taxes.tvaRate}%)</span>
-                              <span>{formatCurrency(results.taxes.tva)}</span>
+                              <span>{renderText(t.tva)} ({results.taxes.tvaRate}%)</span>
+                              <span>{renderCurrency(results.taxes.tva)}</span>
                             </div>
                             <p className="text-[11px] text-blue-500 mt-1">
-                              TVA = (CIF + DD + TCS) × 19%
+                              {renderText('TVA = (CIF + DD + TCS) × 19%')}
                             </p>
                           </div>
                         ) : (
@@ -1510,24 +1564,24 @@
 
                           {/* Risk banner */}
                           <div className="mb-2 bg-violet-100 border border-violet-200 rounded px-2 py-1.5 text-[11px] text-violet-800">
-                            <span className="font-semibold mr-1">⚠ {t.resaleRiskTitle}:</span>
+                            <span className="font-semibold mr-1">⚠ {renderText(t.resaleRiskTitle)}:</span>
                             <span>{resaleRiskText}</span>
                           </div>
 
                           <div className="space-y-1 text-[11px] md:text-xs mb-2">
                             <div className="flex justify-between bg-white rounded px-2 py-1">
                               <span>
-                                {t.resaleAdvantageAmount}
+                                {renderText(t.resaleAdvantageAmount)}
                                 {results.taxAdvantageRate > 0 ? ` (${formatNumber(results.taxAdvantageRate)}%)` : ''}
                               </span>
-                              <span>{formatCurrency(resaleInfo.advantage)}</span>
+                              <span>{renderCurrency(resaleInfo.advantage)}</span>
                             </div>
                           </div>
 
                           {/* Choix période au lieu d'un nombre de mois */}
                           <div className="mb-2">
                             <label className="block text-[11px] font-medium text-violet-800 mb-1">
-                              {t.resalePeriodLabel}
+                              {renderText(t.resalePeriodLabel)}
                             </label>
                             <div className="space-y-1">
                               <label className="flex items-center gap-2 text-[11px]">
@@ -1538,7 +1592,7 @@
                                   checked={resalePeriod === '0_12'}
                                   onChange={(e) => setResalePeriod(e.target.value)}
                                 />
-                                <span>{t.resaleTimeline0_12}</span>
+                                <span>{renderText(t.resaleTimeline0_12)}</span>
                               </label>
                               <label className="flex items-center gap-2 text-[11px]">
                                 <input
@@ -1548,7 +1602,7 @@
                                   checked={resalePeriod === '12_24'}
                                   onChange={(e) => setResalePeriod(e.target.value)}
                                 />
-                                <span>{t.resaleTimeline12_24}</span>
+                                <span>{renderText(t.resaleTimeline12_24)}</span>
                               </label>
                               <label className="flex items-center gap-2 text-[11px]">
                                 <input
@@ -1558,7 +1612,7 @@
                                   checked={resalePeriod === '24_36'}
                                   onChange={(e) => setResalePeriod(e.target.value)}
                                 />
-                                <span>{t.resaleTimeline24_36}</span>
+                                <span>{renderText(t.resaleTimeline24_36)}</span>
                               </label>
                               <label className="flex items-center gap-2 text-[11px]">
                                 <input
@@ -1568,23 +1622,23 @@
                                   checked={resalePeriod === 'after_36'}
                                   onChange={(e) => setResalePeriod(e.target.value)}
                                 />
-                                <span>{t.resaleTimelineAfter36}</span>
+                                <span>{renderText(t.resaleTimelineAfter36)}</span>
                               </label>
                             </div>
                             <p className="mt-1 text-[11px] text-violet-700">
-                              {t[resaleInfo.labelKey]}
+                              {renderText(t[resaleInfo.labelKey])}
                             </p>
                           </div>
 
                           <div className="space-y-1 text-[11px] md:text-xs mb-2">
                             <div className="flex justify-between bg-violet-100 rounded px-2 py-1">
-                              <span>{t.resaleRefundAmount}</span>
-                              <span>{formatCurrency(resaleInfo.refund)}</span>
+                              <span>{renderText(t.resaleRefundAmount)}</span>
+                              <span>{renderCurrency(resaleInfo.refund)}</span>
                             </div>
                             {resaleInfo.keep > 0 && (
                               <div className="flex justify-between bg-emerald-50 rounded px-2 py-1">
-                                <span>{t.resaleSavedLabel}</span>
-                                <span>{formatCurrency(resaleInfo.keep)}</span>
+                                <span>{renderText(t.resaleSavedLabel)}</span>
+                                <span>{renderCurrency(resaleInfo.keep)}</span>
                               </div>
                             )}
                           </div>
@@ -1593,15 +1647,15 @@
                           <div className="mt-1 text-[11px] text-violet-800">
                             <div className="font-semibold mb-1">{t.resaleTimelineTitle}</div>
                             <ul className="space-y-0.5">
-                              <li>• {t.resaleTimeline0_12}</li>
-                              <li>• {t.resaleTimeline12_24}</li>
-                              <li>• {t.resaleTimeline24_36}</li>
-                              <li>• {t.resaleTimelineAfter36}</li>
+                              <li>• {renderText(t.resaleTimeline0_12)}</li>
+                              <li>• {renderText(t.resaleTimeline12_24)}</li>
+                              <li>• {renderText(t.resaleTimeline24_36)}</li>
+                              <li>• {renderText(t.resaleTimelineAfter36)}</li>
                             </ul>
                           </div>
 
                           <p className="text-[11px] text-violet-700 mt-2">
-                            {t.resaleLawNote}
+                            {renderText(t.resaleLawNote)}
                           </p>
                         </div>
                       )}
@@ -1622,29 +1676,29 @@
                             <span className={`font-semibold text-sm ${
                               vehicleAge === 'new' ? 'text-red-800' : 'text-green-800'
                             }`}>
-                              {t.newCarTax}
+                              {renderText(t.newCarTax)}
                             </span>
                           </div>
                           {vehicleAge === 'new' ? (
                             <span className="font-semibold text-red-900">
-                              {formatCurrency(NEW_CAR_VIGNETTE)}
+                              {renderCurrency(NEW_CAR_VIGNETTE)}
                             </span>
                           ) : (
                             <span className="font-semibold text-green-700 text-xs">
-                              {t.notApplicable}
+                              {renderText(t.notApplicable)}
                             </span>
                           )}
                         </div>
 
                         {vehicleAge === 'used' && (
                           <p className="text-[11px] text-green-700 mt-1">
-                            {t.saved}: {formatCurrency(NEW_CAR_VIGNETTE)}
+                            {renderText(t.saved)}: {renderCurrency(NEW_CAR_VIGNETTE)}
                           </p>
                         )}
 
                         {vehicleAge === 'new' && potentialUsedSavings > 0 && (
                           <p className="text-[11px] text-green-800 mt-2 font-medium">
-                            {t.newCarPromoPrefix} {formatCurrency(potentialUsedSavings)} {t.newCarPromoSuffix}
+                            {renderText(t.newCarPromoPrefix)} {renderCurrency(potentialUsedSavings)} {renderText(t.newCarPromoSuffix)}
                           </p>
                         )}
                       </div>
@@ -1654,10 +1708,10 @@
                         <div className="flex items-center justify-between gap-3">
                           <span className="font-semibold text-sm md:text-base flex items-center gap-2">
                             <IconChart className="w-5 h-5" />
-                            {t.totalCost}
+                            {renderText(t.totalCost)}
                           </span>
                           <span className="font-bold text-xl md:text-2xl">
-                            {formatCurrency(results.total)}
+                            {renderCurrency(results.total)}
                           </span>
                         </div>
                       </div>
@@ -1669,19 +1723,19 @@
                           className="w-full mt-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs md:text-sm font-semibold border border-gray-300 bg-white hover:bg-gray-50 text-gray-800"
                         >
                           <span>📄</span>
-                          <span>{t.pdfDownload}</span>
+                          <span>{renderText(t.pdfDownload)}</span>
                         </button>
                         <p className="mt-1 text-[11px] text-gray-500 text-center">
-                          {t.pdfSubtitle}
+                          {renderText(t.pdfSubtitle)}
                         </p>
                       </div>
 
                       {/* Legal refs */}
                       <div className="mt-2 bg-gray-50 border border-gray-200 rounded-md p-3 text-[11px] text-gray-700">
-                        <div className="font-semibold mb-1">{t.legalRef}</div>
+                        <div className="font-semibold mb-1">{renderText(t.legalRef)}</div>
                         <ul className="space-y-1">
-                          <li>• {t.decree}</li>
-                          <li>• {t.article}</li>
+                          <li>• {renderText(t.decree)}</li>
+                          <li>• {renderText(t.article)}</li>
                           <li>
                             • <a
                               href="https://www.douane.gov.dz"
@@ -1690,7 +1744,7 @@
                               className="text-dzGreen-700 underline"
                             >
                               https://www.douane.gov.dz
-                            </a> – {t.douaneSite}
+                            </a> – {renderText(t.douaneSite)}
                           </li>
                         </ul>
                       </div>
@@ -1702,10 +1756,10 @@
                       <IconCar className="w-8 h-8 text-dzGreen-700" />
                     </div>
                     <p className="text-gray-600 text-sm md:text-base">
-                      {t.enterPrice}
+                      {renderText(t.enterPrice)}
                     </p>
                     <p className="text-gray-400 text-xs mt-1">
-                      {t.cifFormula}
+                      {renderText(t.cifFormula)}
                     </p>
                   </div>
                 )}
