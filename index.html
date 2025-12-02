@@ -1695,3 +1695,6 @@ const { useState, useCallback, useEffect } = React;
             '</div>';
         }
     })();
+        const compiledSource = transformed.code + "\n//# sourceURL=inline-app.jsx";
+        const runApp = new Function('React', 'ReactDOM', compiledSource);
+            "Une erreur est survenue lors du chargement de l'application. Veuillez actualiser ou vérifier votre connexion." +
